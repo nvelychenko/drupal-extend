@@ -1,18 +1,51 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.nvelychenko.drupalextend</id>
-    <name>drupal-extend Template</name>
+    <name>Drupal extend</name>
     <vendor>nvelychenko</vendor>
+    <description><![CDATA[
+<h1>Extends Drupal integration with PHPStorm.</h1>
+<h2>The plugin is in BETA</h2>
 
-    <depends>com.intellij.modules.platform</depends>
+<h2>Features</h2>
 
-    <resource-bundle>messages.MyBundle</resource-bundle>
+<h3>Dependency Injection Container</h3>
+<ul>
+    <li>References entity type in getStorage('entity')</li>
+    <li>Autocomplete of getStorage('entity')</li>
+    <li>Autocomplete for existing fields (WIP)</li>
+    <li>Provides ability to know what entity is after ->load() (WIP)</li>
+</ul>
+<h3> TODO:</h2>
+<ul>
+    <li>Provide ability to know what entity is after loadMultiple()</li>
+    <li>Provide autocomplete for field properties</li>
+    <li>Provide references for field properties</li>
+    <li>ETC.</li>
+</ul>
+      ]]></description>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.nvelychenko.drupalextend.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ConfigSchemaIndex"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityIndex"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex"/>
+
+        <psi.referenceContributor implementation="com.github.nvelychenko.drupalextend.reference.ContentEntity"
+                                  language="PHP"/>
     </extensions>
 
-    <applicationListeners>
-        <listener class="com.github.nvelychenko.drupalextend.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    </applicationListeners>
+    <extensions defaultExtensionNs="com.jetbrains.php">
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.DrupalEntityStorage"/>
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.FieldProperty"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <completion.contributor language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalContentEntityContributor"/>
+    </extensions>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.jetbrains.php</depends>
+    <depends>com.intellij.modules.platform</depends>
+    <depends>org.jetbrains.plugins.yaml</depends>
+    <depends>com.jetbrains.php.drupal</depends>
 </idea-plugin>
