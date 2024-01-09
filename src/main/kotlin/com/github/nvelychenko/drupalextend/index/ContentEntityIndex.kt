@@ -1,6 +1,7 @@
 package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
+import com.github.nvelychenko.drupalextend.util.isValidForIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
@@ -20,7 +21,7 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
     private val myDataExternalizer: DataExternalizer<DrupalContentEntity> =
         object : DataExternalizer<DrupalContentEntity> {
             override fun save(out: DataOutput, value: DrupalContentEntity) {
-                out.writeUTF(value.entityType)
+                out.writeUTF(value.entityTypeId)
                 out.writeUTF(value.fqn)
                 out.writeInt(value.keys.size)
                 for (key in value.keys) {
@@ -50,6 +51,10 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
         return DataIndexer { inputData ->
             val map = hashMapOf<String, DrupalContentEntity>()
             val phpFile = inputData.psiFile as PhpFile
+
+            if (!isValidForIndex(inputData)) {
+                return@DataIndexer map
+            }
 
             val phpClass = PsiTreeUtil.findChildOfType(phpFile, PhpClass::class.java) ?: return@DataIndexer map
             if (phpClass.docComment !is PhpDocComment) return@DataIndexer map
@@ -108,7 +113,7 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 0
+    override fun getVersion(): Int = 10
 
     companion object {
         val KEY = ID.create<String, DrupalContentEntity>("com.github.nvelychenko.drupalextend.index.content_types")

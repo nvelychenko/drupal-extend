@@ -1,12 +1,14 @@
 package com.github.nvelychenko.drupalextend.completion
 
-import com.github.nvelychenko.drupalextend.index.ConfigSchemaIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
+import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
+import com.github.nvelychenko.drupalextend.index.FieldsIndex
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.util.ProcessingContext
 import com.intellij.util.indexing.FileBasedIndex
@@ -43,38 +45,48 @@ class DrupalContentEntityContributor : CompletionContributor() {
                     val classReference = parent.classReference
                     if (classReference !is PhpReference) return
 
+                    getFieldCompletionForClassReference(classReference, completionResultSet)
+                }
+            })
 
-                    val project = psiElement.project
+        extend(
+            CompletionType.BASIC,
+            PlatformPatterns
+                .psiElement(LeafPsiElement::class.java)
+                .withParent(
+                    PlatformPatterns.psiElement(StringLiteralExpression::class.java)
+                        .withParent(
+                            PlatformPatterns.psiElement(PhpElementTypes.PARAMETER_LIST)
+                                .withParent(PlatformPatterns.psiElement(PhpElementTypes.METHOD_REFERENCE))
+                        )
+                )
+                .withLanguage(PhpLanguage.INSTANCE),
+            object : CompletionProvider<CompletionParameters>() {
+                public override fun addCompletions(
+                    completionParameters: CompletionParameters,
+                    processingContext: ProcessingContext,
+                    completionResultSet: CompletionResultSet
+                ) {
+                    val leaf = completionParameters.originalPosition ?: return
+                    val element = leaf.parent
 
-                    val globalTypes = classReference.type.global(project).types
+                    if (element !is StringLiteralExpression || element.contents.isEmpty()) return
 
-                    if (globalTypes.isEmpty()) return
+                    val parameterList = (element.parent as ParameterList)
+                    val methodReference = (parameterList.parent as MethodReference)
 
-                    var entityTypeFqn: String? = null
-                    val instance = FileBasedIndex.getInstance()
+                    if ("get" != methodReference.name) return
 
-                    instance
-                        .processAllKeys(ContentEntityFqnIndex.KEY, { fqn ->
-                            val foundEntityTypeFqn = globalTypes.find { it.equals(fqn) }
-                            if (foundEntityTypeFqn != null) {
-                                entityTypeFqn = foundEntityTypeFqn
-                                return@processAllKeys false
-                            }
-                            true
-                        }, project)
+                    var classReference = methodReference.classReference
 
-                    if (entityTypeFqn == null) return
-
-                    val entityTypeId = instance.getValues(ContentEntityFqnIndex.KEY, entityTypeFqn!!, ProjectScope.getAllScope(project)).first().entityTypeId
-
-                    instance
-                        .getAllKeys(ConfigSchemaIndex.KEY, project)
-                        .filter { it.contains("$entityTypeId|") }
-                        .forEach {
-                            completionResultSet.addElement(LookupElementBuilder.create(it.replace("${entityTypeId}|", "")))
+                    if (classReference !is PhpReference) {
+                        if (classReference !is ArrayAccessExpression || classReference.value !is PhpReference) {
+                            return
                         }
 
-
+                        classReference = classReference.value as PhpReference
+                    }
+                    getFieldCompletionForClassReference(classReference, completionResultSet)
                 }
             })
 
@@ -134,15 +146,72 @@ class DrupalContentEntityContributor : CompletionContributor() {
 
                     if (!isSuperInterface) return
 
-                    FileBasedIndex.getInstance()
-                        .getAllKeys(com.github.nvelychenko.drupalextend.index.ContentEntityIndex.KEY, project)
+                    // @todo Implement caching
+                    val instance = FileBasedIndex.getInstance()
+                    instance
+                        .getAllKeys(ContentEntityIndex.KEY, project)
                         .filter { !it.contains("\\") }
                         .forEach {
-                            completionResultSet.addElement(LookupElementBuilder.create(it.replace("node|", "")))
+                            val values = instance.getValues(ContentEntityIndex.KEY, it, GlobalSearchScope.allScope(project))
+                            completionResultSet.addElement(
+                                LookupElementBuilder.create(it)
+                                    .withTypeText(values.first().fqn, true)
+                            )
                         }
-
-
                 }
             })
+    }
+
+    fun getFieldCompletionForClassReference(classReference: PhpReference, completionResultSet: CompletionResultSet) {
+        val project = classReference.project
+
+        val globalTypes = classReference.type.global(project).types
+
+        if (globalTypes.isEmpty()) return
+
+        var entityTypeFqn: String? = null
+        val instance = FileBasedIndex.getInstance()
+
+        // @todo Implement caching
+        instance
+            .processAllKeys(ContentEntityFqnIndex.KEY, { fqn ->
+                val foundEntityTypeFqn = globalTypes.find { it.replace("[]", "").equals(fqn) }
+                if (foundEntityTypeFqn != null) {
+                    entityTypeFqn = foundEntityTypeFqn.replace("[]", "")
+                    return@processAllKeys false
+                }
+                true
+            }, project)
+
+        if (entityTypeFqn == null) return
+
+        val allScope = GlobalSearchScope.allScope(project)
+        val contentEntity = instance.getValues(ContentEntityFqnIndex.KEY, entityTypeFqn!!, allScope).first()
+        PhpIndex.getInstance(project).getAnyByFQN(contentEntity.fqn).first() ?: return
+
+        val entityTypeId = contentEntity.entityTypeId
+        val keys = instance.getValues(ContentEntityIndex.KEY, entityTypeId, allScope).first().keys
+
+        // @todo Implement caching
+        instance
+            .getAllKeys(FieldsIndex.KEY, project)
+            .filter { it.contains("$entityTypeId|") }
+            .forEach {
+                val fieldIndex =  instance.getValues(FieldsIndex.KEY, it, allScope).first()
+                var fieldName = fieldIndex.fieldName
+                if (fieldName.contains("KEY|")) {
+                    val key = fieldName.split("|")[1]
+                    if (keys.contains(key)) {
+                        return@forEach
+                    }
+                    fieldName = keys[key] ?: return@forEach
+                }
+
+                completionResultSet.addElement(
+                    LookupElementBuilder.create(fieldName)
+                        .withTypeText(fieldIndex.fieldType, true)
+                )
+            }
+
     }
 }

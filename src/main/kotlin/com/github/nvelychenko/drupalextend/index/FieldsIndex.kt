@@ -2,8 +2,10 @@ package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
 import com.github.nvelychenko.drupalextend.index.types.DrupalField
+import com.github.nvelychenko.drupalextend.util.isValidForIndex
+import com.github.nvelychenko.drupalextend.util.yml.keyPath
 import com.github.nvelychenko.drupalextend.value.ExtendableContentEntityRelatedClasses
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
@@ -23,7 +25,7 @@ import org.jetbrains.yaml.psi.YAMLKeyValue
 import java.io.DataInput
 import java.io.DataOutput
 
-class ConfigSchemaIndex : FileBasedIndexExtension<String, DrupalField>() {
+class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
     private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
 
     private val myDataExternalizer: DataExternalizer<DrupalField> =
@@ -32,10 +34,11 @@ class ConfigSchemaIndex : FileBasedIndexExtension<String, DrupalField>() {
                 out.writeUTF(value.entityType)
                 out.writeUTF(value.fieldType)
                 out.writeUTF(value.fieldName)
+                out.writeUTF(value.path)
             }
 
             override fun read(input: DataInput): DrupalField {
-                return DrupalField(input.readUTF(), input.readUTF(), input.readUTF())
+                return DrupalField(input.readUTF(), input.readUTF(), input.readUTF(), input.readUTF())
             }
         }
 
@@ -47,6 +50,19 @@ class ConfigSchemaIndex : FileBasedIndexExtension<String, DrupalField>() {
         return DataIndexer { inputData ->
             val map = hashMapOf<String, DrupalField>()
             val psiFile = inputData.psiFile
+
+            if (!isValidForIndex(inputData)) {
+                return@DataIndexer map
+            }
+
+            // @todo Improve directory handing
+            if (psiFile is YAMLFile) {
+                val relativePath =
+                    VfsUtil.getRelativePath(inputData.file, inputData.project.baseDir, '/') ?: return@DataIndexer map
+                if (!relativePath.contains("config/sync")) {
+                    return@DataIndexer map
+                }
+            }
 
             when (psiFile) {
                 is YAMLFile -> processYml(map, psiFile)
@@ -66,7 +82,7 @@ class ConfigSchemaIndex : FileBasedIndexExtension<String, DrupalField>() {
                 val identifier = psiFile.name.substringAfter("field.storage.").replace(".yml", "")
                 val entityType = identifier.substringBeforeLast(".")
                 val fieldName = identifier.substringAfterLast(".")
-                map["${entityType}|${fieldName}"] = DrupalField(entityType, node.valueText, fieldName)
+                map["${entityType}|${fieldName}"] = DrupalField(entityType, node.valueText, fieldName, node.keyPath)
             }
         }
 
@@ -85,11 +101,12 @@ class ConfigSchemaIndex : FileBasedIndexExtension<String, DrupalField>() {
         val methodName =
             ExtendableContentEntityRelatedClasses.getClass(phpClass.fqn)?.methodName ?: "baseFieldDefinitions"
 
-        val fields = phpClass.findOwnMethodByName(methodName)?.let { processMethod(it) } ?: HashMap()
+        val baseFieldDefinitionMethod = phpClass.findOwnMethodByName(methodName) ?: return HashMap()
+
+        val fields = processMethod(baseFieldDefinitionMethod)
 
         for (field in fields) {
-            map["${entityTypeId}|${field.key}"] = DrupalField(entityTypeId, field.key, field.value)
-            map["${entityTypeId}|${field.key}"] = DrupalField(entityTypeId, field.key, field.value)
+            map["${entityTypeId}|${field.key}"] = DrupalField(entityTypeId, field.value, field.key, field.path)
             field.key
         }
 
@@ -129,48 +146,66 @@ class ConfigSchemaIndex : FileBasedIndexExtension<String, DrupalField>() {
         return getPhpDocParameter(contentTypeDoc, "id")
     }
 
-    private fun processMethod(method: Method): HashMap<String, String> {
-        val fieldsDefinitions = HashMap<String, String>()
+    private fun processMethod(method: Method): ArrayList<FieldRepresentation> {
+        val fieldsDefinitions = arrayListOf<FieldRepresentation>()
 
         val returnType = PsiTreeUtil.findChildOfType(method, PhpReturn::class.java)?.firstPsiChild
         if (returnType !is Variable && returnType !is ArrayCreationExpression) {
             return fieldsDefinitions
         }
 
-        if (returnType is Variable) {
-            for (variable in method.findVariablesByName(returnType.name)) {
-                val assignment = PhpPsiUtil.getParentOfClass(variable, AssignmentExpression::class.java) ?: continue
+        // @todo Implement ability to process ArrayCreationExpression
+        if (returnType !is Variable) {
+            return fieldsDefinitions
+        }
 
-                val assignedMethod = PsiTreeUtil.findChildOfType(assignment, ClassReference::class.java)?.parent
+        for (variable in method.findVariablesByName(returnType.name)) {
+            val assignment = PhpPsiUtil.getParentOfClass(variable, AssignmentExpression::class.java) ?: continue
 
-                if (assignedMethod is MethodReferenceImpl && assignedMethod.parameters.isNotEmpty() && assignedMethod.parameters[0]?.text != null) {
-                    val fieldType = assignedMethod.parameters[0].text
-                    val index = PsiTreeUtil.findChildOfType(assignment, ArrayIndex::class.java)
+            val assignedMethod = PsiTreeUtil.findChildOfType(assignment, ClassReference::class.java)?.parent
 
-                    val fieldName = when (val indexValue = index?.value) {
-                        is StringLiteralExpression -> indexValue.contents
-                        is MethodReference -> {
-                            // Jesus?
-                            if ((index.name == "getKey" || index.name == "getRevisionKey" || index.name == "getRevisionMetadataKey") && indexValue.parameters[0] is StringLiteralExpression) {
-                                "KEY|${(indexValue.parameters[0] as StringLiteralExpression).contents}"
-                            } else {
-                                null
-                            }
-                        }
+            if (assignedMethod !is MethodReferenceImpl) continue
+            val parameters = assignedMethod.parameters
 
-                        else -> null
-                    } ?: continue
+            if (parameters.isEmpty()) continue
 
-                    fieldsDefinitions[fieldName] = fieldType
-                    continue
+            val firstParameter = parameters[0]
+            if (firstParameter !is StringLiteralExpression || firstParameter.contents.isEmpty()) continue
+
+            val index = PsiTreeUtil.findChildOfType(assignment, ArrayIndex::class.java) ?: continue
+
+            val fieldName = when (val indexValue = index.value) {
+                is StringLiteralExpression -> indexValue.contents
+                is MethodReference -> {
+                    // Jesus?
+                    val assignIndexParameters = indexValue.parameters
+                    if (assignIndexParameters.isEmpty()) continue
+                    val firstAssignIndexParameter = assignIndexParameters[0]
+                    if (firstAssignIndexParameter !is StringLiteralExpression || firstParameter.contents.isEmpty()) continue
+
+                    if ((indexValue.name == "getKey" || indexValue.name == "getRevisionKey" || indexValue.name == "getRevisionMetadataKey")) {
+                        "KEY|${firstAssignIndexParameter.contents}"
+                    } else {
+                        null
+                    }
                 }
 
-                val assignmentType = assignment.variable
-                if (assignmentType is MethodReferenceImpl && assignmentType.isStatic) {
-                    assignmentType.resolve()
-                }
+                else -> null
+            } ?: continue
 
-            }
+            fieldsDefinitions.add(
+                FieldRepresentation(
+                    fieldName.replace("'", ""),
+                    firstParameter.contents.replace("'", ""),
+                    method.name
+                ),
+            )
+            continue
+
+            // @todo Implement handing of static methods.
+//            val assignmentType = assignment.variable
+//            if (assignmentType is MethodReferenceImpl && assignmentType.isStatic) {
+//            }
         }
 
         return fieldsDefinitions
@@ -187,15 +222,17 @@ class ConfigSchemaIndex : FileBasedIndexExtension<String, DrupalField>() {
     override fun getValueExternalizer(): DataExternalizer<DrupalField> = myDataExternalizer
 
     override fun getInputFilter(): FileBasedIndex.InputFilter {
-        return FileBasedIndex.InputFilter { file: VirtualFile -> file.fileType == YAMLFileType.YML || file.fileType == PhpFileType.INSTANCE }
+        return FileBasedIndex.InputFilter { file -> file.fileType == YAMLFileType.YML || file.fileType == PhpFileType.INSTANCE }
     }
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 0
+    override fun getVersion(): Int = 10
 
     companion object {
-        val KEY = ID.create<String, DrupalField>("com.github.nvelychenko.drupalextend.index.base_field")
+        val KEY = ID.create<String, DrupalField>("com.github.nvelychenko.drupalextend.index.fields")
     }
+
+    private data class FieldRepresentation(val key: String, val value: String, val path: String)
 
 }

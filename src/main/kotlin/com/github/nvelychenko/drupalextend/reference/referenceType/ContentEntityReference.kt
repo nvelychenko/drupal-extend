@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.ResolveResult
-import com.intellij.psi.search.ProjectScope
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.PhpClass
@@ -14,7 +14,7 @@ class ContentEntityReference(element: PsiElement, private val entityTypeId: Stri
     PsiPolyVariantReferenceBase<PsiElement>(element) {
 
     private val project = element.project
-    private val scope = ProjectScope.getAllScope(project)
+    private val scope = GlobalSearchScope.allScope(project)
 
     override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
         val entityTypes = FileBasedIndex.getInstance().getValues(

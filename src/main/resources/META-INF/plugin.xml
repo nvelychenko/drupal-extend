@@ -9,14 +9,14 @@
 
 <h2>Features</h2>
 
-<h3>Dependency Injection Container</h3>
 <ul>
-    <li>References entity type in getStorage('entity')</li>
-    <li>Autocomplete of getStorage('entity')</li>
+    <li>Autocomplete of all existing storage e.g. getStorage('node')</li>
+    <li>Reference for entity type in getStorage('entity') e.g. you can click on 'entity' and it will redirect to appropriate entity class</li>
     <li>Autocomplete for existing fields (WIP)</li>
-    <li>Provides ability to know what entity is after ->load() (WIP)</li>
+    <li>Provides ability to determine what entity is loaded by storage->load(), ->loadMultiple</li>
 </ul>
-<h3> TODO:</h2>
+
+<h3>TODO:</h2>
 <ul>
     <li>Provide ability to know what entity is after loadMultiple()</li>
     <li>Provide autocomplete for field properties</li>
@@ -26,7 +26,8 @@
       ]]></description>
 
     <extensions defaultExtensionNs="com.intellij">
-        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ConfigSchemaIndex"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.FieldTypeIndex"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.FieldsIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex"/>
 
@@ -35,15 +36,15 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.jetbrains.php">
-        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.DrupalEntityStorage"/>
-        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.FieldProperty"/>
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider"/>
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.ContentEntityFieldTypeProvider"/>
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.FieldPropertyTypeProvider"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
         <completion.contributor language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalContentEntityContributor"/>
     </extensions>
 
-    <depends>com.intellij.modules.platform</depends>
     <depends>com.jetbrains.php</depends>
     <depends>com.intellij.modules.platform</depends>
     <depends>org.jetbrains.plugins.yaml</depends>

@@ -1,6 +1,7 @@
 package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.index.types.ContentEntity
+import com.github.nvelychenko.drupalextend.util.isValidForIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
@@ -41,6 +42,10 @@ class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
             val map = hashMapOf<String, ContentEntity>()
             val phpFile = inputData.psiFile as PhpFile
 
+            if (!isValidForIndex(inputData)) {
+                return@DataIndexer map
+            }
+
             val phpClass = PsiTreeUtil.findChildOfType(phpFile, PhpClass::class.java) ?: return@DataIndexer map
             if (phpClass.docComment !is PhpDocComment) return@DataIndexer map
 
@@ -75,7 +80,7 @@ class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 0
+    override fun getVersion(): Int = 10
 
     companion object {
         val KEY = ID.create<String, ContentEntity>("com.github.nvelychenko.drupalextend.index.content_entity_fqn")
