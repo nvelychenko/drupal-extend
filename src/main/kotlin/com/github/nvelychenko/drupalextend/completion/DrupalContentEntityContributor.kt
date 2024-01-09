@@ -153,6 +153,8 @@ class DrupalContentEntityContributor : CompletionContributor() {
                         .filter { !it.contains("\\") }
                         .forEach {
                             val values = instance.getValues(ContentEntityIndex.KEY, it, GlobalSearchScope.allScope(project))
+                            if (values.isEmpty()) return@forEach
+
                             completionResultSet.addElement(
                                 LookupElementBuilder.create(it)
                                     .withTypeText(values.first().fqn, true)
@@ -197,7 +199,10 @@ class DrupalContentEntityContributor : CompletionContributor() {
             .getAllKeys(FieldsIndex.KEY, project)
             .filter { it.contains("$entityTypeId|") }
             .forEach {
-                val fieldIndex =  instance.getValues(FieldsIndex.KEY, it, allScope).first()
+                val fieldIndexes =  instance.getValues(FieldsIndex.KEY, it, allScope)
+                if (fieldIndexes.isEmpty()) return@forEach
+
+                val fieldIndex = fieldIndexes.first()
                 var fieldName = fieldIndex.fieldName
                 if (fieldName.contains("KEY|")) {
                     val key = fieldName.split("|")[1]
