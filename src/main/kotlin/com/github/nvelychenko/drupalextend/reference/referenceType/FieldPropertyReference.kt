@@ -30,7 +30,6 @@ class FieldPropertyReference(element: PsiElement, val entityTypeId: String, val 
         PhpFileType.INSTANCE
     )
 
-
     override fun multiResolve(incompleteCode: Boolean) = HashMap<VirtualFile, String>().apply {
         val processor = FileBasedIndex.ValueProcessor<DrupalField> { file, value -> put(file, value.path); true }
         FileBasedIndex.getInstance()

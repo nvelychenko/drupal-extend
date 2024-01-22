@@ -2,7 +2,9 @@ package com.github.nvelychenko.drupalextend.extensions
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.jetbrains.php.PhpClassHierarchyUtils
 import com.jetbrains.php.lang.PhpLangUtil
+import com.jetbrains.php.lang.psi.elements.PhpClass
 import com.jetbrains.php.lang.psi.elements.Variable
 
 fun PsiElement.findVariablesByName(variableName: String): List<Variable> {
@@ -21,4 +23,19 @@ fun PsiElement.findVariablesByName(variableName: String): List<Variable> {
     })
     variables.reverse()
     return variables
+}
+
+fun PhpClass.isSuperInterfaceOf(interfaces: Array<PhpClass>): Boolean {
+    var isInstanceOf = false
+    PhpClassHierarchyUtils.processSuperInterfaces(this, true, true) {
+        interfaces.forEach { currentInterface ->
+            if (PhpClassHierarchyUtils.classesEqual(currentInterface, it)) {
+                isInstanceOf = true
+            }
+        }
+
+        return@processSuperInterfaces !isInstanceOf
+    }
+
+    return isInstanceOf
 }

@@ -1,33 +1,29 @@
 package com.github.nvelychenko.drupalextend.type
 
+import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider.Util.SPLITER_KEY
+import com.github.nvelychenko.drupalextend.util.getIndexValueForKey
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.ProjectScope
-import com.intellij.util.indexing.FileBasedIndex
-import com.jetbrains.php.PhpClassHierarchyUtils
 import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.parser.PhpElementTypes
 import com.jetbrains.php.lang.psi.PhpPsiUtil
-import com.jetbrains.php.lang.psi.elements.Method
-import com.jetbrains.php.lang.psi.elements.MethodReference
-import com.jetbrains.php.lang.psi.elements.ParameterList
-import com.jetbrains.php.lang.psi.elements.PhpClass
-import com.jetbrains.php.lang.psi.elements.PhpNamedElement
-import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
+import com.jetbrains.php.lang.psi.elements.*
 import com.jetbrains.php.lang.psi.resolve.types.PhpType
 import com.jetbrains.php.lang.psi.resolve.types.PhpTypeProvider4
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.util.*
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
 
 class EntityStorageTypeProvider : PhpTypeProvider4 {
 
-    private val ENTITY_LOADERS_SIGNATURES = arrayOf(
-        Pair("\\Drupal\\Core\\Entity\\EntityTypeManagerInterface", "getStorage"),
-    )
+    private val entityTypeManagerInterface = "\\Drupal\\Core\\Entity\\EntityTypeManagerInterface"
 
     override fun getKey(): Char {
         return Util.KEY
@@ -55,7 +51,8 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
                         .withFirstChild(
                             PlatformPatterns.psiElement(StringLiteralExpression::class.java),
                         )
-                ).accepts(psiElement)) {
+                ).accepts(psiElement)
+        ) {
             return null
         }
 
@@ -65,81 +62,24 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
         val firstParameter = parameterList.getParameter(0) as StringLiteralExpression
         if (firstParameter.contents.isEmpty()) return null
 
-        val signature = psiElement.signature.replace('|', SPLITER_KEY)
-        return PhpType().add("#" + key + signature + Util.SPLIT_KEY + firstParameter.contents)
+        val signature = compressString(psiElement.signature).replace('|', SPLITER_KEY)
+        return PhpType().add("#$key${signature}${Util.SPLIT_KEY}${firstParameter.contents}")
+    }
+
+    private fun compressString(str: String): String {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        GZIPOutputStream(byteArrayOutputStream).bufferedWriter(Charsets.UTF_8).use { it.write(str) }
+        return Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray())
+    }
+
+    private fun decompressString(compressedStr: String): String {
+        val bytes = Base64.getDecoder().decode(compressedStr)
+        return GZIPInputStream(ByteArrayInputStream(bytes))
+            .bufferedReader(Charsets.UTF_8).use { it.readText() }
     }
 
     override fun complete(expression: String?, project: Project?): PhpType? {
-        if (project == null || expression == null) return null
-
-        val parts = expression.split(Util.SPLIT_KEY)
-
-        if (parts.size != 2) {
-            return null
-        }
-
-        val (originalSignature, entityTypeId) = parts
-
-        val entityTypeIndex = FileBasedIndex.getInstance().getValues(ContentEntityIndex.KEY, entityTypeId, GlobalSearchScope.allScope(project))
-
-        if (entityTypeIndex.isEmpty()) return null
-
-        val phpIndex = PhpIndex.getInstance(project)
-        val namedCollection = mutableListOf<PhpNamedElement>()
-        for (partialSignature in originalSignature.split(SPLITER_KEY)) {
-            namedCollection.addAll(phpIndex.getBySignature(partialSignature, null, 0))
-        }
-
-        if (namedCollection.isEmpty()) return null
-
-        var isEntityStorage = false;
-
-        val loadedStorageClasses = mutableMapOf<String, PhpClass>()
-        val localEntityStorageSignatures = ENTITY_LOADERS_SIGNATURES.clone().toMutableList()
-
-        for (method in namedCollection) {
-            if (method !is Method) {
-                continue;
-            }
-
-            val methodClass = method.containingClass ?: continue
-            val isImmediateEntityStorage = localEntityStorageSignatures.find { it.first == methodClass.fqn }
-
-            if (isImmediateEntityStorage != null) {
-                isEntityStorage = true
-                break;
-            }
-
-            if (loadedStorageClasses.size != localEntityStorageSignatures.size) {
-                localEntityStorageSignatures.forEach {
-                    val entityReferences = phpIndex.getAnyByFQN(it.first)
-                    if (entityReferences.isEmpty()) {
-                        localEntityStorageSignatures.remove(it)
-                    }
-                    loadedStorageClasses[it.first] = entityReferences.first()
-                }
-            }
-
-            for (storageClass in loadedStorageClasses) {
-                PhpClassHierarchyUtils.processSuperInterfaces(methodClass, true, true) {
-                    return@processSuperInterfaces if (PhpClassHierarchyUtils.classesEqual(storageClass.value, it)) {
-                        isEntityStorage = true
-                        false
-                    } else {
-                        true
-                    }
-                }
-            }
-
-            if (isEntityStorage) break
-        }
-
-        if (!isEntityStorage) return null
-
-        // @todo Implement ability to set appropriate storage.
-        return PhpType()
-            .add("\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage")
-            .add("\\Drupal\\Core\\Entity\\EntityStorageBase")
+        return null
     }
 
     override fun getBySignature(
@@ -147,8 +87,57 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
         visited: Set<String?>?,
         depth: Int,
         project: Project?
-    ): Collection<PhpClass> {
+    ): Collection<PhpNamedElement> {
+        // @todo Figure out why id doesn't work, here should be this.getBySignature method that should work
+        //   but it brakes ContentEntityFieldTypeProvider type provider.
         return emptyList()
+    }
+
+    private fun getBySignature(
+        project: Project?,
+        expression: String,
+        visited: Set<String?>?,
+        depth: Int
+    ): Collection<PhpNamedElement> {
+        if (project == null || !expression.contains(Util.SPLIT_KEY)) return emptyList()
+
+        val parts = expression.split(Util.SPLIT_KEY)
+
+        if (parts.size != 2) {
+            return emptyList()
+        }
+
+        val (originalSignature, entityTypeId) = parts
+
+        val entityType = getIndexValueForKey(ContentEntityIndex.KEY, entityTypeId, project) ?: return emptyList()
+
+        val phpIndex = PhpIndex.getInstance(project)
+        val namedCollection = mutableListOf<PhpNamedElement>()
+        for (partialSignature in decompressString(originalSignature.replace(SPLITER_KEY, '|')).split('|')) {
+            namedCollection.addAll(phpIndex.getBySignature(partialSignature, visited, depth))
+        }
+
+        val methods = namedCollection.filterIsInstance<Method>()
+
+        if (methods.isEmpty()) return emptyList()
+
+        methods.forEach {
+            if (it.fqn == entityTypeManagerInterface) {
+                return phpIndex.getAnyByFQN(entityType.storageHandler)
+            }
+        }
+
+        val entityTypeManagerInterface =
+            phpIndex.getAnyByFQN(entityTypeManagerInterface).takeIf { it.isNotEmpty() }?.first()
+                ?: return namedCollection
+
+        methods.forEach {
+            if (it.containingClass?.isSuperInterfaceOf(arrayOf(entityTypeManagerInterface)) == true) {
+                return phpIndex.getAnyByFQN(entityType.storageHandler)
+            }
+        }
+
+        return namedCollection
     }
 
     object Util {

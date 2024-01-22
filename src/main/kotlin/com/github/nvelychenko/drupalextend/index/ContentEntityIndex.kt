@@ -28,6 +28,8 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
                     out.writeUTF(key.key)
                     out.writeUTF(key.value)
                 }
+
+                out.writeUTF(value.storageHandler)
             }
 
             override fun read(input: DataInput): DrupalContentEntity {
@@ -39,7 +41,9 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
                     keys[input.readUTF()] = input.readUTF()
                 }
 
-                return DrupalContentEntity(entityType, fqn, keys)
+                val sqlStorageHandler = input.readUTF()
+
+                return DrupalContentEntity(entityType, fqn, keys, sqlStorageHandler)
             }
         }
 
@@ -91,7 +95,9 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
                 resolvedKeys[key] = (getPhpDocParameter(contentEntityTypeDocText, key) ?: continue)
             }
 
-            map[id] = DrupalContentEntity(id, phpClass.fqn, resolvedKeys)
+            val sqlStorageHandler = getPhpDocParameter(contentEntityTypeDocText, "storage") ?: "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage"
+
+            map[id] = DrupalContentEntity(id, phpClass.fqn, resolvedKeys, sqlStorageHandler)
 
             map
         }
@@ -113,7 +119,7 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 10
+    override fun getVersion(): Int = 11
 
     companion object {
         val KEY = ID.create<String, DrupalContentEntity>("com.github.nvelychenko.drupalextend.index.content_types")

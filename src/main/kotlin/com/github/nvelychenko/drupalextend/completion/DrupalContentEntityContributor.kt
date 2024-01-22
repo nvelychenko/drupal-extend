@@ -177,7 +177,7 @@ class DrupalContentEntityContributor : CompletionContributor() {
         // @todo Implement caching
         instance
             .processAllKeys(ContentEntityFqnIndex.KEY, { fqn ->
-                val foundEntityTypeFqn = globalTypes.find { it.replace("[]", "").equals(fqn) }
+                val foundEntityTypeFqn = globalTypes.find { it.replace("[]", "") == fqn }
                 if (foundEntityTypeFqn != null) {
                     entityTypeFqn = foundEntityTypeFqn.replace("[]", "")
                     return@processAllKeys false
