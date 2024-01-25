@@ -2,8 +2,6 @@
 
 # drupal-extend Changelog
 
-## [Unreleased]
-
 ## [0.0.5]
 
 ### Added
@@ -11,6 +9,7 @@
 - Index caching
 - Static content entity provider e.g. Node::load()
 - Fields autocomplete only knowing entity interface e.g. NodeInterface
+- ECK content entity type support.
 
 ### Fixed
 

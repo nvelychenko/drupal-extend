@@ -37,10 +37,10 @@ class DrupalContentEntityContributor : CompletionContributor() {
                     val parent: PsiElement
                     val prevSibling = completionParameters.position.prevSibling
                     parent = if (prevSibling != null && prevSibling.node.elementType === PhpTokenTypes.ARROW) {
-                        // $foo->
+                        // $xex->
                         prevSibling.parent
                     } else {
-                        // $foo->ad
+                        // $xex->ad
                         psiElement.parent
                     }
 
