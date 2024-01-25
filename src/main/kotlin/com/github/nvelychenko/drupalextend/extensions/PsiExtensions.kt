@@ -25,7 +25,11 @@ fun PsiElement.findVariablesByName(variableName: String): List<Variable> {
     return variables
 }
 
-fun PhpClass.isSuperInterfaceOf(interfaces: Array<PhpClass>): Boolean {
+fun PhpClass.isSuperInterfaceOf(interfaze: PhpClass): Boolean {
+    return isSuperInterfacesOf(arrayOf(interfaze));
+}
+
+fun PhpClass.isSuperInterfacesOf(interfaces: Array<PhpClass>): Boolean {
     var isInstanceOf = false
     PhpClassHierarchyUtils.processSuperInterfaces(this, true, true) {
         interfaces.forEach { currentInterface ->

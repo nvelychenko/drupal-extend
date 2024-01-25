@@ -4,8 +4,16 @@
 [![Version](https://img.shields.io/jetbrains/plugin/v/23474-drupal-extend.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/23474-drupal-extend.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
 
-## Functionality
-  @todo Write what the plugin does.
+The plugin is enhancement for your Drupal development experience.
+
+## Features
+* Autocomplete for Content Entity Storage (Config Storage WIP)
+
+* Fields autocomplete (for now config directory is hardcoded to the `config/sync`, project setting WIP)
+
+* References for Storages and Fields (Ctrl + Click)
+
+* TypeProvider for EntityStorageInterface::load/loadMultiple/loadByProperties
 
 ## Installation
 

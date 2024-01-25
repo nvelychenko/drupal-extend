@@ -1,10 +1,11 @@
 package com.github.nvelychenko.drupalextend.type
 
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
-import com.github.nvelychenko.drupalextend.util.getIndexValueForKey
+import com.github.nvelychenko.drupalextend.util.getValue
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.jsonSchema.impl.nestedCompletions.letIf
 import com.jetbrains.php.lang.psi.elements.MethodReference
 import com.jetbrains.php.lang.psi.elements.PhpNamedElement
@@ -54,7 +55,7 @@ class ContentEntityFieldTypeProvider : PhpTypeProvider4 {
 
         val (entityTypeId, methodName) = expression.replace("#$key", "").split(splitKey)
 
-        return getIndexValueForKey(ContentEntityIndex.KEY, entityTypeId, project)
+        return FileBasedIndex.getInstance().getValue(ContentEntityIndex.KEY, entityTypeId, project)
             ?.let {
                 PhpType().add(it.fqn.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
             }

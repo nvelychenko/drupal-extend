@@ -16,6 +16,27 @@ import java.io.DataInput
 import java.io.DataOutput
 
 class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
+    private val ignoredInterfaces = arrayOf(
+        "\\Drupal\\Core\\Config\\Entity\\ConfigEntityInterface",
+        "\\Drupal\\Core\\Entity\\ContentEntityInterface",
+        "\\Drupal\\Core\\Entity\\EntityChangedInterface",
+        "\\Drupal\\Core\\Entity\\EntityDescriptionInterface",
+        "\\Drupal\\Core\\Entity\\EntityFormModeInterface",
+        "\\Drupal\\Core\\Entity\\EntityPublishedInterface",
+        "\\Drupal\\Core\\Entity\\EntityViewModeInterface",
+        "\\Drupal\\Core\\Entity\\EntityWithPluginCollectionInterface",
+        "\\Drupal\\Core\\Entity\\FieldableEntityInterface",
+        "\\Drupal\\Core\\Entity\\RevisionableEntityBundleInterface",
+        "\\Drupal\\Core\\Entity\\RevisionableInterface",
+        "\\Drupal\\Core\\Entity\\RevisionLogInterface",
+        "\\Drupal\\Core\\Entity\\SynchronizableInterface",
+        "\\Drupal\\Core\\Entity\\TranslatableInterface",
+        "\\Drupal\\Core\\Entity\\TranslatableRevisionableInterface",
+        "\\Drupal\\Core\\Field\\FieldConfigInterface",
+        "\\Drupal\\Core\\Access\\AccessibleInterface",
+        "\\Drupal\\Core\\Cache\\CacheableDependencyInterface",
+        "\\Drupal\\Core\\TypedData\\TranslationStatusInterface"
+    )
     private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
 
     private val myDataExternalizer: DataExternalizer<ContentEntity> =
@@ -47,6 +68,7 @@ class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
             }
 
             val phpClass = PsiTreeUtil.findChildOfType(phpFile, PhpClass::class.java) ?: return@DataIndexer map
+
             if (phpClass.docComment !is PhpDocComment) return@DataIndexer map
 
             val contentEntityTypes = (phpClass.docComment as PhpDocComment).getTagElementsByName("@ContentEntityType")
@@ -57,8 +79,15 @@ class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
             val contentEntityTypeDocText = contentEntityTypes[0].text
 
             val id = getPhpDocParameter(contentEntityTypeDocText, "id") ?: return@DataIndexer map
+            val interfaces = phpClass.implementsList.referenceElements
+                .mapNotNull { it.fqn }
+                .filter { !ignoredInterfaces.contains(it) }
 
             map[phpClass.fqn] = ContentEntity(id, phpClass.fqn)
+
+            for (immediateInterface in interfaces) {
+                map[immediateInterface] = ContentEntity(id, phpClass.fqn)
+            }
 
             map
         }
@@ -80,7 +109,7 @@ class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 10
+    override fun getVersion(): Int = 11
 
     companion object {
         val KEY = ID.create<String, ContentEntity>("com.github.nvelychenko.drupalextend.index.content_entity_fqn")

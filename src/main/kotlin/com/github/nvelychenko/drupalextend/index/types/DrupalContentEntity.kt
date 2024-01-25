@@ -1,7 +1,6 @@
 package com.github.nvelychenko.drupalextend.index.types
 
 import java.util.*
-import kotlin.collections.HashMap
 
 data class DrupalContentEntity(val entityTypeId: String, val fqn: String, val keys: HashMap<String, String>, val storageHandler: String) {
     override fun equals(other: Any?): Boolean {

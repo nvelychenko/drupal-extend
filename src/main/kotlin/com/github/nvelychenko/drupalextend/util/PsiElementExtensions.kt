@@ -1,11 +1,6 @@
 package com.github.nvelychenko.drupalextend.util
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.ID
 
 
 val PsiElement.parents: Iterable<PsiElement>
@@ -22,20 +17,4 @@ val PsiElement.parents: Iterable<PsiElement>
             }
         }
     }
-
-fun <K : Any, V> getIndexValueForKey(
-    id: ID<K, V>,
-    key: K,
-    project: Project
-): V? {
-    return FileBasedIndex.getInstance().getValues(id, key, GlobalSearchScope.allScope(project))
-        .takeIf { it.isNotEmpty() }
-        ?.first()
-}
-
-fun getModificationTrackerForIndexId(project: Project, id: ID<*, *>): ModificationTracker {
-    return ModificationTracker {
-        FileBasedIndex.getInstance().getIndexModificationStamp(id, project)
-    }
-}
 

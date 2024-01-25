@@ -12,12 +12,14 @@ data class ExtendableContentEntityRelatedClasses(val className: String, val meth
             ExtendableContentEntityRelatedClasses("\\Drupal\\Core\\Entity\\RevisionableContentEntityBase", "baseFieldDefinitions"),
         )
 
-        fun getClass(clazz: String): ExtendableContentEntityRelatedClasses? {
-            return allPossibleExtendableContentEntityClasses.find { it.className == clazz }
-        }
+        fun getClass(clazz: String) =
+            allPossibleExtendableContentEntityClasses.find { it.className == clazz }
 
-        fun hasClass(clazz: String): Boolean {
-            return allPossibleExtendableContentEntityClasses.find { it.className == clazz } != null
-        }
+
+        fun hasClass(clazz: String) =
+            allPossibleExtendableContentEntityClasses.find { it.className == clazz } != null
+
+        fun getAllPossibleExtendableClasses() =
+            allPossibleExtendableContentEntityClasses.map { it.className }.toTypedArray()
     }
 }

@@ -38,6 +38,7 @@
     <extensions defaultExtensionNs="com.jetbrains.php">
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider"/>
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.ContentEntityFieldTypeProvider"/>
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.StaticContentEntityTypeProvider"/>
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.FieldPropertyTypeProvider"/>
     </extensions>
 

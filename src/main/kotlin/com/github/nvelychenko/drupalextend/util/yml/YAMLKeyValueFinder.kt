@@ -3,7 +3,6 @@ package com.github.nvelychenko.drupalextend.util.yml
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.yaml.psi.YAMLKeyValue
-import com.github.nvelychenko.drupalextend.util.yml.keyPath
 
 class YAMLKeyValueFinder(private val keyPath: String) : PsiRecursiveElementVisitor() {
     private var kv: YAMLKeyValue? = null

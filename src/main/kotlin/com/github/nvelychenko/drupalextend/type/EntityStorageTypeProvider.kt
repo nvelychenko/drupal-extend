@@ -3,11 +3,12 @@ package com.github.nvelychenko.drupalextend.type
 import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider.Util.SPLITER_KEY
-import com.github.nvelychenko.drupalextend.util.getIndexValueForKey
+import com.github.nvelychenko.drupalextend.util.getValue
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
+import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.parser.PhpElementTypes
 import com.jetbrains.php.lang.psi.PhpPsiUtil
@@ -109,7 +110,8 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
 
         val (originalSignature, entityTypeId) = parts
 
-        val entityType = getIndexValueForKey(ContentEntityIndex.KEY, entityTypeId, project) ?: return emptyList()
+        val entityType =
+            FileBasedIndex.getInstance().getValue(ContentEntityIndex.KEY, entityTypeId, project) ?: return emptyList()
 
         val phpIndex = PhpIndex.getInstance(project)
         val namedCollection = mutableListOf<PhpNamedElement>()
@@ -121,23 +123,25 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
 
         if (methods.isEmpty()) return emptyList()
 
+        val baseStorageClass = phpIndex.getClassesByFQN("\\Drupal\\Core\\Entity\\EntityStorageBase")
+
         methods.forEach {
             if (it.fqn == entityTypeManagerInterface) {
-                return phpIndex.getAnyByFQN(entityType.storageHandler)
+                return phpIndex.getClassesByFQN(entityType.storageHandler) + baseStorageClass
             }
         }
 
         val entityTypeManagerInterface =
-            phpIndex.getAnyByFQN(entityTypeManagerInterface).takeIf { it.isNotEmpty() }?.first()
-                ?: return namedCollection
+            phpIndex.getInterfacesByFQN(entityTypeManagerInterface).takeIf { it.isNotEmpty() }?.first()
+                ?: return emptyList()
 
         methods.forEach {
-            if (it.containingClass?.isSuperInterfaceOf(arrayOf(entityTypeManagerInterface)) == true) {
-                return phpIndex.getAnyByFQN(entityType.storageHandler)
+            if (it.containingClass?.isSuperInterfaceOf(entityTypeManagerInterface) == true) {
+                return phpIndex.getClassesByFQN(entityType.storageHandler) + baseStorageClass
             }
         }
 
-        return namedCollection
+        return emptyList()
     }
 
     object Util {

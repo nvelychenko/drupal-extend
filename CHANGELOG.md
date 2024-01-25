@@ -3,5 +3,17 @@
 # drupal-extend Changelog
 
 ## [Unreleased]
+
+## [0.0.5]
+
 ### Added
-- Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+
+- Index caching
+- Static content entity provider e.g. Node::load()
+- Fields autocomplete only knowing entity interface e.g. NodeInterface
+
+### Fixed
+
+- Fields autocomplete was not working in certain circumstances
+- Content entity provider was not working in certain circumstances
+- Deprecated usage of baseDir

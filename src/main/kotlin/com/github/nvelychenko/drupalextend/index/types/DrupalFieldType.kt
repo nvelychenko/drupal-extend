@@ -1,7 +1,6 @@
 package com.github.nvelychenko.drupalextend.index.types
 
 import java.util.*
-import kotlin.collections.HashMap
 
 data class DrupalFieldType(val fieldTypeId: String, val fqn: String, val listClassFqn: String, val properties: HashMap<String, String>) {
     override fun equals(other: Any?): Boolean {
