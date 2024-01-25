@@ -1,30 +1,27 @@
 package com.github.nvelychenko.drupalextend.type
 
+import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
+import com.github.nvelychenko.drupalextend.util.getAllProjectKeys
 import com.github.nvelychenko.drupalextend.util.getValue
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.jsonSchema.impl.nestedCompletions.letIf
+import com.jetbrains.php.PhpIndex
+import com.jetbrains.php.lang.psi.elements.Method
 import com.jetbrains.php.lang.psi.elements.MethodReference
+import com.jetbrains.php.lang.psi.elements.PhpClass
 import com.jetbrains.php.lang.psi.elements.PhpNamedElement
 import com.jetbrains.php.lang.psi.resolve.types.PhpType
 import com.jetbrains.php.lang.psi.resolve.types.PhpTypeProvider4
 
 
-class ContentEntityFieldTypeProvider : PhpTypeProvider4 {
-
-    private val possibleMethods = mutableMapOf(
-        Pair("load", ""),
-        Pair("loadByProperties", "[]"),
-        Pair("loadMultiple", "[]"),
-    )
-
-    private val splitKey = '\u0421'
+class StaticContentEntityTypeProvider : PhpTypeProvider4 {
 
     override fun getKey(): Char {
-        return '\u0420'
+        return '\u0434'
     }
 
     override fun getType(psiElement: PsiElement): PhpType? {
@@ -34,31 +31,28 @@ class ContentEntityFieldTypeProvider : PhpTypeProvider4 {
 
         if (psiElement !is MethodReference) return null
 
-        if (!possibleMethods.containsKey(psiElement.name)) return null
+        if (psiElement.name != "load" || !psiElement.isStatic) return null
 
-        val signature = psiElement.signature
-
-        if (!signature.contains(EntityStorageTypeProvider.Util.SPLIT_KEY)) {
-            return null
-        }
-
-        val entityTypeId = signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore(".load")
-
-        if (entityTypeId.isEmpty()) return null
-
-        return PhpType().add("#$key$entityTypeId$splitKey${psiElement.name}")
+        return PhpType().add("#$key${psiElement.signature}")
     }
 
     override fun complete(expression: String?, project: Project?): PhpType? {
         if (expression == null || project == null || !expression.contains(key))
             return null
 
-        val (entityTypeId, methodName) = expression.replace("#$key", "").split(splitKey)
+        val signature = expression.substring(2)
 
-        return FileBasedIndex.getInstance().getValue(ContentEntityIndex.KEY, entityTypeId, project)
-            ?.let {
-                PhpType().add(it.fqn.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
+        val fileBasedIndex = FileBasedIndex.getInstance()
+
+        for (partialSignature in signature.split("|")) {
+            if (partialSignature.startsWith("#M#C")) {
+                val contentEntity = fileBasedIndex.getValue(ContentEntityFqnIndex.KEY, partialSignature.substring(4).substringBefore('.'), project) ?: continue
+
+                return PhpType().add(contentEntity.fqn)
             }
+        }
+
+        return null
     }
 
     override fun getBySignature(

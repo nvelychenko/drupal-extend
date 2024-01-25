@@ -1,15 +1,17 @@
 package com.github.nvelychenko.drupalextend.completion
 
+import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
+import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider
+import com.github.nvelychenko.drupalextend.util.*
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.ProjectScope
 import com.intellij.util.ProcessingContext
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.PhpClassHierarchyUtils
@@ -20,6 +22,7 @@ import com.jetbrains.php.lang.parser.PhpElementTypes
 import com.jetbrains.php.lang.psi.elements.*
 
 class DrupalContentEntityContributor : CompletionContributor() {
+
     init {
         extend(
             CompletionType.BASIC,
@@ -70,7 +73,7 @@ class DrupalContentEntityContributor : CompletionContributor() {
                     val leaf = completionParameters.originalPosition ?: return
                     val element = leaf.parent
 
-                    if (element !is StringLiteralExpression || element.contents.isEmpty()) return
+                    if (element !is StringLiteralExpression) return
 
                     val parameterList = (element.parent as ParameterList)
                     val methodReference = (parameterList.parent as MethodReference)
@@ -86,6 +89,7 @@ class DrupalContentEntityContributor : CompletionContributor() {
 
                         classReference = classReference.value as PhpReference
                     }
+
                     getFieldCompletionForClassReference(classReference, completionResultSet)
                 }
             })
@@ -109,13 +113,10 @@ class DrupalContentEntityContributor : CompletionContributor() {
                     completionResultSet: CompletionResultSet
                 ) {
                     val leaf = completionParameters.originalPosition ?: return
-
                     val element = leaf.parent
-
                     if (element !is StringLiteralExpression || element.contents.isEmpty()) return
 
-                    val parameterList = (element.parent as ParameterList)
-                    val methodReference = (parameterList.parent as MethodReference)
+                    val methodReference = (element.parent as ParameterList).parent as MethodReference
 
                     if ("getStorage" != methodReference.name) return
                     val method = methodReference.resolve() ?: return
@@ -126,38 +127,21 @@ class DrupalContentEntityContributor : CompletionContributor() {
                     val project = method.project
 
                     val entityReferences =
-                        PhpIndex.getInstance(project).getAnyByFQN("\\Drupal\\Core\\Entity\\EntityTypeManagerInterface")
-                    if (entityReferences.isEmpty()) return
-                    val entityTypeManagerInterface: PhpClass = entityReferences.first()
+                        PhpIndex.getInstance(project).getInterfacesByFQN("\\Drupal\\Core\\Entity\\EntityTypeManagerInterface").firstOrNull() ?: return
 
-                    var isSuperInterface = false
-                    PhpClassHierarchyUtils.processSuperInterfaces(methodClass, true, true) {
-                        return@processSuperInterfaces if (PhpClassHierarchyUtils.classesEqual(
-                                entityTypeManagerInterface,
-                                it
-                            )
-                        ) {
-                            isSuperInterface = true
-                            false
-                        } else {
-                            true
-                        }
-                    }
+                    if (!methodClass.isSuperInterfaceOf(entityReferences)) return
 
-                    if (!isSuperInterface) return
-
-                    // @todo Implement caching
                     val instance = FileBasedIndex.getInstance()
+
                     instance
-                        .getAllKeys(ContentEntityIndex.KEY, project)
+                        .getAllProjectKeys(ContentEntityIndex.KEY, project)
                         .filter { !it.contains("\\") }
                         .forEach {
-                            val values = instance.getValues(ContentEntityIndex.KEY, it, GlobalSearchScope.allScope(project))
-                            if (values.isEmpty()) return@forEach
+                            val contentEntity = instance.getValue(ContentEntityIndex.KEY, it, project) ?: return@forEach
 
                             completionResultSet.addElement(
                                 LookupElementBuilder.create(it)
-                                    .withTypeText(values.first().fqn, true)
+                                    .withTypeText(contentEntity.fqn, true)
                             )
                         }
                 }
@@ -166,44 +150,30 @@ class DrupalContentEntityContributor : CompletionContributor() {
 
     fun getFieldCompletionForClassReference(classReference: PhpReference, completionResultSet: CompletionResultSet) {
         val project = classReference.project
+        val index = FileBasedIndex.getInstance()
 
-        val globalTypes = classReference.type.global(project).types
+        val entityTypeId: String?;
 
-        if (globalTypes.isEmpty()) return
+        if (classReference.signature.contains(EntityStorageTypeProvider.Util.SPLIT_KEY)) {
+            entityTypeId = classReference.signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore('.')
+        } else {
+            val globalTypes = classReference.type.global(project).types.map { it.replace("[]", "") }
 
-        var entityTypeFqn: String? = null
-        val instance = FileBasedIndex.getInstance()
+            if (globalTypes.isEmpty()) return
 
-        // @todo Implement caching
-        instance
-            .processAllKeys(ContentEntityFqnIndex.KEY, { fqn ->
-                val foundEntityTypeFqn = globalTypes.find { it.replace("[]", "") == fqn }
-                if (foundEntityTypeFqn != null) {
-                    entityTypeFqn = foundEntityTypeFqn.replace("[]", "")
-                    return@processAllKeys false
-                }
-                true
-            }, project)
+            val entityTypeFqn = index.getAllProjectKeys(
+                ContentEntityFqnIndex.KEY, project
+            ).find { globalTypes.contains(it) } ?: return
 
-        if (entityTypeFqn == null) return
+            val contentEntity = index.getValue(ContentEntityFqnIndex.KEY, entityTypeFqn, project) ?: return
+            entityTypeId = contentEntity.entityTypeId
+        }
 
-        val allScope = GlobalSearchScope.allScope(project)
-        val contentEntity = instance.getValues(ContentEntityFqnIndex.KEY, entityTypeFqn!!, allScope).first()
-        PhpIndex.getInstance(project).getAnyByFQN(contentEntity.fqn).first() ?: return
+        val keys = index.getValue(ContentEntityIndex.KEY, entityTypeId, project)?.keys ?: return
 
-        val entityTypeId = contentEntity.entityTypeId
-        val keys = instance.getValues(ContentEntityIndex.KEY, entityTypeId, allScope).first().keys
-
-        // @todo Implement caching
-        instance
-            .getAllKeys(FieldsIndex.KEY, project)
-            .filter { it.contains("$entityTypeId|") }
+        index.getAllValuesWithKeyPrefix(FieldsIndex.KEY, "$entityTypeId|", project)
             .forEach {
-                val fieldIndexes =  instance.getValues(FieldsIndex.KEY, it, allScope)
-                if (fieldIndexes.isEmpty()) return@forEach
-
-                val fieldIndex = fieldIndexes.first()
-                var fieldName = fieldIndex.fieldName
+                var fieldName = it.fieldName
                 if (fieldName.contains("KEY|")) {
                     val key = fieldName.split("|")[1]
                     if (keys.contains(key)) {
@@ -214,9 +184,8 @@ class DrupalContentEntityContributor : CompletionContributor() {
 
                 completionResultSet.addElement(
                     LookupElementBuilder.create(fieldName)
-                        .withTypeText(fieldIndex.fieldType, true)
+                        .withTypeText(it.fieldType, true)
                 )
             }
-
     }
 }

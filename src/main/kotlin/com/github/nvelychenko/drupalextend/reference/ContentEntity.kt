@@ -1,11 +1,14 @@
 package com.github.nvelychenko.drupalextend.reference
 
+import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.reference.referenceType.ContentEntityReference
 import com.github.nvelychenko.drupalextend.reference.referenceType.FieldPropertyReference
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider
+import com.github.nvelychenko.drupalextend.util.*
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
+import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.PhpClassHierarchyUtils
 import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.PhpLanguage
@@ -13,11 +16,6 @@ import com.jetbrains.php.lang.parser.PhpElementTypes
 import com.jetbrains.php.lang.psi.elements.*
 
 class ContentEntity : PsiReferenceContributor() {
-    private val ENTITY_STORAGE_SIGNATURES = arrayOf(
-        Pair("\\Drupal\\Core\\Entity\\EntityStorageInterface", "load"),
-        Pair("\\Drupal\\Core\\Entity\\EntityBase", "load"),
-    )
-
     private val ENTITY_LOADERS_SIGNATURES = arrayOf(
         Pair("\\Drupal\\Core\\Entity\\EntityTypeManagerInterface", "getStorage"),
     )
@@ -99,16 +97,35 @@ class ContentEntity : PsiReferenceContributor() {
 
                     if (methodReference.name != "get") return psiReferences
 
-                    val classReference = methodReference.classReference
+                    val reference = when (val classReference = methodReference.classReference) {
+                        is PhpReference -> classReference
+                        is ArrayAccessExpression -> if (classReference.value is PhpReference) {
+                            (classReference.value as PhpReference)
+                        }  else { null }
 
-                    if (classReference !is PhpReference) return psiReferences
+                        else -> null
+                    } ?: return psiReferences
 
-                    val signature = classReference.signature
+                    val entityTypeId: String?
 
-                    if (!signature.contains(EntityStorageTypeProvider.Util.SPLIT_KEY)) return psiReferences
+                    if (reference.signature.contains(EntityStorageTypeProvider.Util.SPLIT_KEY)) {
+                            entityTypeId = reference.signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore('.')
+                    } else {
+                        val project = element.project
+                        val types = reference.type.global(project).filterPrimitives().types
 
-                    val entityTypeId =
-                        signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore('.')
+                        val index = FileBasedIndex.getInstance()
+
+                        val contentEntity = index.getAllProjectKeys(ContentEntityFqnIndex.KEY, project)
+                            .find { types.contains(it) } ?: return psiReferences
+
+                        entityTypeId = index.getValue(ContentEntityFqnIndex.KEY, contentEntity, project)?.entityTypeId
+                    }
+
+                    if (entityTypeId == null) {
+                        return psiReferences
+                    }
+
 
 
                     return arrayOf(FieldPropertyReference(element, entityTypeId, element.contents))

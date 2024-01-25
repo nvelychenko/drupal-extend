@@ -23,19 +23,3 @@ val PsiElement.parents: Iterable<PsiElement>
         }
     }
 
-fun <K : Any, V> getIndexValueForKey(
-    id: ID<K, V>,
-    key: K,
-    project: Project
-): V? {
-    return FileBasedIndex.getInstance().getValues(id, key, GlobalSearchScope.allScope(project))
-        .takeIf { it.isNotEmpty() }
-        ?.first()
-}
-
-fun getModificationTrackerForIndexId(project: Project, id: ID<*, *>): ModificationTracker {
-    return ModificationTracker {
-        FileBasedIndex.getInstance().getIndexModificationStamp(id, project)
-    }
-}
-
