@@ -1,5 +1,6 @@
 package com.github.nvelychenko.drupalextend.util.yml
 
+import com.github.nvelychenko.drupalextend.extensions.keyPath
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.yaml.psi.YAMLKeyValue

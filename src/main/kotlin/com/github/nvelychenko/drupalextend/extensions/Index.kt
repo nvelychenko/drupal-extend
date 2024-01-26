@@ -1,4 +1,4 @@
-package com.github.nvelychenko.drupalextend.util
+package com.github.nvelychenko.drupalextend.extensions
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir

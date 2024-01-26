@@ -5,9 +5,9 @@ import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider
-import com.github.nvelychenko.drupalextend.util.getAllProjectKeys
-import com.github.nvelychenko.drupalextend.util.getAllValuesWithKeyPrefix
-import com.github.nvelychenko.drupalextend.util.getValue
+import com.github.nvelychenko.drupalextend.extensions.getAllProjectKeys
+import com.github.nvelychenko.drupalextend.extensions.getAllValuesWithKeyPrefix
+import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns

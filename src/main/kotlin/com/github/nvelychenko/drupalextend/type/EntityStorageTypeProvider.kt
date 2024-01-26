@@ -3,7 +3,7 @@ package com.github.nvelychenko.drupalextend.type
 import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider.Util.SPLITER_KEY
-import com.github.nvelychenko.drupalextend.util.getValue
+import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
@@ -94,6 +94,7 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
         return emptyList()
     }
 
+    @Suppress("unused")
     private fun getBySignature(
         project: Project?,
         expression: String,
@@ -145,9 +146,9 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
     }
 
     object Util {
-        val SPLIT_KEY = '\u3333'
-        val KEY = '\u3334'
-        val SPLITER_KEY = '\u3336'
+        const val SPLIT_KEY = '\u3333'
+        const val KEY = '\u3334'
+        const val SPLITER_KEY = '\u3336'
     }
 
 
