@@ -116,9 +116,24 @@ class DrupalContentEntityContributor : CompletionContributor() {
                     val element = leaf.parent
                     if (element !is StringLiteralExpression || element.contents.isEmpty()) return
 
-                    val methodReference = (element.parent as ParameterList).parent as MethodReference
+                    val parameterList = element.parent as ParameterList
+                    if (!parameterList.parameters.first().isEquivalentTo(element)) {
+                        return;
+                    }
+                    val methodReference = parameterList.parent as MethodReference
 
-                    if ("getStorage" != methodReference.name) return
+                    var allowedMethods = arrayOf(
+                        "getAccessControlHandler",
+                        "getStorage",
+                        "getViewBuilder",
+                        "getListBuilder",
+                        "getFormObject",
+                        "getRouteProviders",
+                        "hasHandler",
+                        "getDefinition",
+                    )
+
+                    if (!allowedMethods.contains(methodReference.name)) return
                     val method = methodReference.resolve() ?: return
 
                     if (method !is Method) return
