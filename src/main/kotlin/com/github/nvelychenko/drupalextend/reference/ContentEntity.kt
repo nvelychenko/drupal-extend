@@ -4,8 +4,8 @@ import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.reference.referenceType.ContentEntityReference
 import com.github.nvelychenko.drupalextend.reference.referenceType.FieldPropertyReference
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider
-import com.github.nvelychenko.drupalextend.util.getAllProjectKeys
-import com.github.nvelychenko.drupalextend.util.getValue
+import com.github.nvelychenko.drupalextend.extensions.getAllProjectKeys
+import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
@@ -17,7 +17,7 @@ import com.jetbrains.php.lang.parser.PhpElementTypes
 import com.jetbrains.php.lang.psi.elements.*
 
 class ContentEntity : PsiReferenceContributor() {
-    private val ENTITY_LOADERS_SIGNATURES = arrayOf(
+    private val entityStorageSignature = arrayOf(
         Pair("\\Drupal\\Core\\Entity\\EntityTypeManagerInterface", "getStorage"),
     )
 
@@ -42,7 +42,7 @@ class ContentEntity : PsiReferenceContributor() {
 
                     val parameterList = (element.parent as ParameterList)
                     val methodReference = (parameterList.parent as MethodReference)
-                    ENTITY_LOADERS_SIGNATURES.find { it.second == methodReference.name } ?: return psiReferences
+                    entityStorageSignature.find { it.second == methodReference.name } ?: return psiReferences
                     val method = methodReference.resolve() ?: return psiReferences
 
                     if (method !is Method) return psiReferences

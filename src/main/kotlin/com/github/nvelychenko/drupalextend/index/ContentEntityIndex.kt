@@ -1,7 +1,8 @@
 package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
-import com.github.nvelychenko.drupalextend.util.isValidForIndex
+import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
+import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -141,13 +142,6 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
         val sqlStorageHandler = getPhpDocParameter(contentEntityTypeDocText, "storage") ?: "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage"
 
         map[id] = DrupalContentEntity(id, phpClass.fqn, resolvedKeys, sqlStorageHandler)
-    }
-
-    private fun getPhpDocParameter(phpDocText: String, id: String): String? {
-        @Suppress("RegExpUnnecessaryNonCapturingGroup")
-        val entityTypeMatch = Regex("${id}(?:\"?)\\s*=\\s*\"([^\"]+)\"").find(phpDocText)
-
-        return entityTypeMatch?.groups?.get(1)?.value
     }
 
     override fun getKeyDescriptor(): KeyDescriptor<String> = myKeyDescriptor

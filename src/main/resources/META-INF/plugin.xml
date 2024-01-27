@@ -19,6 +19,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.FieldTypeIndex"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ConfigEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.FieldsIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex"/>
@@ -42,4 +43,7 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>org.jetbrains.plugins.yaml</depends>
     <depends>com.jetbrains.php.drupal</depends>
+
+    <depends optional="true" config-file="symfony.xml">fr.adrienbrault.idea.symfony2plugin</depends>
+    <depends optional="true">de.espend.idea.php.annotation</depends>
 </idea-plugin>

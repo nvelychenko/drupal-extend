@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementResolveResult.createResults
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiPolyVariantReferenceBase
+import com.intellij.psi.ResolveResult
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.FileBasedIndex
@@ -18,7 +19,7 @@ import com.jetbrains.php.lang.psi.elements.PhpClass
 import org.jetbrains.yaml.YAMLFileType
 import org.jetbrains.yaml.psi.YAMLFile
 
-class FieldPropertyReference(element: PsiElement, val entityTypeId: String, val fieldName: String) :
+class FieldPropertyReference(element: PsiElement, val entityTypeId: String, private val fieldName: String) :
     PsiPolyVariantReferenceBase<PsiElement>(element) {
 
     private val psiManager: PsiManager by lazy { PsiManager.getInstance(project) }
@@ -30,7 +31,7 @@ class FieldPropertyReference(element: PsiElement, val entityTypeId: String, val 
         PhpFileType.INSTANCE
     )
 
-    override fun multiResolve(incompleteCode: Boolean) = HashMap<VirtualFile, String>().apply {
+    override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> = HashMap<VirtualFile, String>().apply {
         val processor = FileBasedIndex.ValueProcessor<DrupalField> { file, value -> put(file, value.path); true }
         FileBasedIndex.getInstance()
             .processValues(FieldsIndex.KEY, "${entityTypeId}|${fieldName}", null, processor, scope)

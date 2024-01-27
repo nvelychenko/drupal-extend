@@ -1,13 +1,14 @@
 package com.github.nvelychenko.drupalextend.completion
 
 import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
+import com.github.nvelychenko.drupalextend.index.ConfigEntityIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider
-import com.github.nvelychenko.drupalextend.util.getAllProjectKeys
-import com.github.nvelychenko.drupalextend.util.getAllValuesWithKeyPrefix
-import com.github.nvelychenko.drupalextend.util.getValue
+import com.github.nvelychenko.drupalextend.extensions.getAllProjectKeys
+import com.github.nvelychenko.drupalextend.extensions.getAllValuesWithKeyPrefix
+import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns
@@ -116,9 +117,24 @@ class DrupalContentEntityContributor : CompletionContributor() {
                     val element = leaf.parent
                     if (element !is StringLiteralExpression || element.contents.isEmpty()) return
 
-                    val methodReference = (element.parent as ParameterList).parent as MethodReference
+                    val parameterList = element.parent as ParameterList
+                    if (!parameterList.parameters.first().isEquivalentTo(element)) {
+                        return;
+                    }
+                    val methodReference = parameterList.parent as MethodReference
 
-                    if ("getStorage" != methodReference.name) return
+                    var allowedMethods = arrayOf(
+                        "getAccessControlHandler",
+                        "getStorage",
+                        "getViewBuilder",
+                        "getListBuilder",
+                        "getFormObject",
+                        "getRouteProviders",
+                        "hasHandler",
+                        "getDefinition",
+                    )
+
+                    if (!allowedMethods.contains(methodReference.name)) return
                     val method = methodReference.resolve() ?: return
 
                     if (method !is Method) return
@@ -144,6 +160,17 @@ class DrupalContentEntityContributor : CompletionContributor() {
                             completionResultSet.addElement(
                                 LookupElementBuilder.create(it)
                                     .withTypeText(contentEntity.fqn, true)
+                            )
+                        }
+
+                    instance
+                        .getAllProjectKeys(ConfigEntityIndex.KEY, project)
+                        .forEach {
+                            val configEntityFqn = instance.getValue(ConfigEntityIndex.KEY, it, project) ?: return@forEach
+
+                            completionResultSet.addElement(
+                                LookupElementBuilder.create(it)
+                                    .withTypeText(configEntityFqn, true)
                             )
                         }
                 }

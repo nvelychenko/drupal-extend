@@ -1,4 +1,4 @@
-package com.github.nvelychenko.drupalextend.value
+package com.github.nvelychenko.drupalextend.data
 
 data class ExtendableContentEntityRelatedClasses(val className: String, val methodName: String) {
 
@@ -19,6 +19,7 @@ data class ExtendableContentEntityRelatedClasses(val className: String, val meth
         fun hasClass(clazz: String) =
             allPossibleExtendableContentEntityClasses.find { it.className == clazz } != null
 
+        @Suppress("unused")
         fun getAllPossibleExtendableClasses() =
             allPossibleExtendableContentEntityClasses.map { it.className }.toTypedArray()
     }

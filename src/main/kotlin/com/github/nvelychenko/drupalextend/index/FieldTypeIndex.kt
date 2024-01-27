@@ -2,7 +2,8 @@ package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
 import com.github.nvelychenko.drupalextend.index.types.DrupalFieldType
-import com.github.nvelychenko.drupalextend.util.isValidForIndex
+import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
+import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
@@ -18,7 +19,7 @@ import com.jetbrains.php.lang.psi.elements.impl.MethodReferenceImpl
 import java.io.DataInput
 import java.io.DataOutput
 
-class FieldTypeIndex() : FileBasedIndexExtension<String, DrupalFieldType>() {
+class FieldTypeIndex : FileBasedIndexExtension<String, DrupalFieldType>() {
     private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
 
     private val myDataExternalizer: DataExternalizer<DrupalFieldType> =
@@ -81,7 +82,7 @@ class FieldTypeIndex() : FileBasedIndexExtension<String, DrupalFieldType>() {
                 phpClass.fqn
             }
 
-            val propertyDefinitionsMethod = phpClass.findOwnMethodByName("propertyDefinitions");
+            val propertyDefinitionsMethod = phpClass.findOwnMethodByName("propertyDefinitions")
 
             if (propertyDefinitionsMethod == null && hasEntityTypeAnnotation) {
                 map[id] = DrupalFieldType(id, phpClass.fqn, listClass, HashMap())
@@ -140,12 +141,6 @@ class FieldTypeIndex() : FileBasedIndexExtension<String, DrupalFieldType>() {
         return fieldProperties
     }
 
-    private fun getPhpDocParameter(phpDocText: String, id: String): String? {
-        val entityTypeMatch = Regex("${id}(?:\"?)\\s*=\\s*\"([^\"]+)\"").find(phpDocText)
-
-        return entityTypeMatch?.groups?.get(1)?.value
-    }
-
     override fun getKeyDescriptor(): KeyDescriptor<String> = myKeyDescriptor
 
     override fun getValueExternalizer(): DataExternalizer<DrupalFieldType> = myDataExternalizer
@@ -160,7 +155,7 @@ class FieldTypeIndex() : FileBasedIndexExtension<String, DrupalFieldType>() {
 
     companion object {
         val KEY = ID.create<String, DrupalFieldType>("com.github.nvelychenko.drupalextend.index.field_type")
-        val DUMMY_LIST_CLASS = "Dummy"
+        const val DUMMY_LIST_CLASS = "Dummy"
     }
 
 }
