@@ -2,9 +2,10 @@ package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
 import com.github.nvelychenko.drupalextend.index.types.DrupalField
-import com.github.nvelychenko.drupalextend.util.isValidForIndex
-import com.github.nvelychenko.drupalextend.util.yml.keyPath
-import com.github.nvelychenko.drupalextend.value.ExtendableContentEntityRelatedClasses
+import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
+import com.github.nvelychenko.drupalextend.extensions.keyPath
+import com.github.nvelychenko.drupalextend.data.ExtendableContentEntityRelatedClasses
+import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiFile
@@ -214,12 +215,6 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
         }
 
         return fieldsDefinitions
-    }
-
-    private fun getPhpDocParameter(phpDocText: String, id: String): String? {
-        val entityTypeMatch = Regex("${id}\\s*=\\s*\"([^\"]+)\"").find(phpDocText)
-
-        return entityTypeMatch?.groups?.get(1)?.value
     }
 
     override fun getKeyDescriptor(): KeyDescriptor<String> = myKeyDescriptor

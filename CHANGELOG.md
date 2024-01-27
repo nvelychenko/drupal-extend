@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Integration with symfony service type provider for \Drupal::service
+
 ## [0.0.5]
 
 ### Added

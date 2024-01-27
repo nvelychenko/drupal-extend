@@ -19,7 +19,7 @@ import org.apache.commons.lang3.StringUtils
 
 class FieldPropertyTypeProvider : PhpTypeProvider4 {
 
-    val endKey = '\u3339'
+    private val endKey = '\u3339'
 
     override fun getKey(): Char {
         return '\u3338'
