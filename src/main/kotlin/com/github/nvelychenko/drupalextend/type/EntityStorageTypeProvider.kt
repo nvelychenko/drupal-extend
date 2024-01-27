@@ -80,7 +80,50 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
     }
 
     override fun complete(expression: String?, project: Project?): PhpType? {
-        return null
+        if (project == null || expression == null || !expression.contains(Util.SPLIT_KEY)) return null
+
+        val signature = expression.replace("#${key}", "")
+        val parts = signature.split(Util.SPLIT_KEY)
+
+        if (parts.size != 2) {
+            return null
+        }
+
+        val (originalSignature, entityTypeId) = parts
+
+        val entityType =
+                FileBasedIndex.getInstance().getValue(ContentEntityIndex.KEY, entityTypeId, project) ?: return null
+
+        val phpIndex = PhpIndex.getInstance(project)
+        val namedCollection = mutableListOf<PhpNamedElement>()
+        for (partialSignature in decompressString(originalSignature.replace(SPLITER_KEY, '|')).split('|')) {
+            namedCollection.addAll(phpIndex.getBySignature(partialSignature))
+        }
+
+        val methods = namedCollection.filterIsInstance<Method>()
+
+        if (methods.isEmpty()) return null
+
+        val entityTypeManagerInterface =
+                phpIndex.getInterfacesByFQN(entityTypeManagerInterface).takeIf { it.isNotEmpty() }?.first()
+                        ?: return null
+
+        val entityStorageClass = phpIndex.getClassesByFQN(entityType.storageHandler).takeIf { it.isNotEmpty() }?.first()
+                ?: return null
+
+        val type = PhpType()
+        methods.forEach { method ->
+            val clazz = method.containingClass ?: return@forEach
+            if (clazz.isSuperInterfaceOf(entityTypeManagerInterface)) {
+                PhpType().add(entityStorageClass.implementsList.referenceElements.first())
+                entityStorageClass.implementsList.referenceElements.
+                        map {
+                            it.fqn
+                        }.forEach(type::add)
+            }
+        }
+
+        return type
     }
 
     override fun getBySignature(
@@ -88,61 +131,8 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
         visited: Set<String?>?,
         depth: Int,
         project: Project?
-    ): Collection<PhpNamedElement> {
-        // @todo Figure out why id doesn't work, here should be this.getBySignature method that should work
-        //   but it brakes ContentEntityFieldTypeProvider type provider.
-        return emptyList()
-    }
-
-    @Suppress("unused")
-    private fun getBySignature(
-        project: Project?,
-        expression: String,
-        visited: Set<String?>?,
-        depth: Int
-    ): Collection<PhpNamedElement> {
-        if (project == null || !expression.contains(Util.SPLIT_KEY)) return emptyList()
-
-        val parts = expression.split(Util.SPLIT_KEY)
-
-        if (parts.size != 2) {
-            return emptyList()
-        }
-
-        val (originalSignature, entityTypeId) = parts
-
-        val entityType =
-            FileBasedIndex.getInstance().getValue(ContentEntityIndex.KEY, entityTypeId, project) ?: return emptyList()
-
-        val phpIndex = PhpIndex.getInstance(project)
-        val namedCollection = mutableListOf<PhpNamedElement>()
-        for (partialSignature in decompressString(originalSignature.replace(SPLITER_KEY, '|')).split('|')) {
-            namedCollection.addAll(phpIndex.getBySignature(partialSignature, visited, depth))
-        }
-
-        val methods = namedCollection.filterIsInstance<Method>()
-
-        if (methods.isEmpty()) return emptyList()
-
-        val baseStorageClass = phpIndex.getClassesByFQN("\\Drupal\\Core\\Entity\\EntityStorageBase")
-
-        methods.forEach {
-            if (it.fqn == entityTypeManagerInterface) {
-                return phpIndex.getClassesByFQN(entityType.storageHandler) + baseStorageClass
-            }
-        }
-
-        val entityTypeManagerInterface =
-            phpIndex.getInterfacesByFQN(entityTypeManagerInterface).takeIf { it.isNotEmpty() }?.first()
-                ?: return emptyList()
-
-        methods.forEach {
-            if (it.containingClass?.isSuperInterfaceOf(entityTypeManagerInterface) == true) {
-                return phpIndex.getClassesByFQN(entityType.storageHandler) + baseStorageClass
-            }
-        }
-
-        return emptyList()
+    ): Collection<PhpNamedElement>? {
+        return null
     }
 
     object Util {
