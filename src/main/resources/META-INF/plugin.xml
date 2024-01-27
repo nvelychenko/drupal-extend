@@ -25,6 +25,15 @@
 
         <psi.referenceContributor implementation="com.github.nvelychenko.drupalextend.reference.ContentEntity"
                                   language="PHP"/>
+
+        <projectService serviceImplementation="com.github.nvelychenko.drupalextend.forms.Settings"/>
+
+        <projectConfigurable
+                instance="com.github.nvelychenko.drupalextend.forms.SettingsForm"
+                displayName="Drupal Extend"
+                id="DrupalExtend.SettingsForm"
+                parentId="reference.webide.settings.project.settings.php"
+                nonDefaultProject="true"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.jetbrains.php">

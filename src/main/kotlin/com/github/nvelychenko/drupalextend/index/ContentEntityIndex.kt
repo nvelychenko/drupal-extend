@@ -1,5 +1,6 @@
 package com.github.nvelychenko.drupalextend.index
 
+import com.github.nvelychenko.drupalextend.forms.Settings
 import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
 import com.github.nvelychenko.drupalextend.util.isValidForIndex
 import com.intellij.openapi.project.guessProjectDir
@@ -81,7 +82,8 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
         if (baseDir != null && file != null) {
             val relativePath = VfsUtil.getRelativePath(file, baseDir, '/') ?: return
 
-            if (!relativePath.contains("config/sync")) {
+            val configDIr = Settings.getInstance(psiFile.project).configDir;
+            if (!relativePath.contains(configDIr)) {
                 return
             }
         }

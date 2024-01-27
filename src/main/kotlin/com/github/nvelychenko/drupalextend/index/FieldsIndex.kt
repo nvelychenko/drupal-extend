@@ -1,6 +1,7 @@
 package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
+import com.github.nvelychenko.drupalextend.forms.Settings
 import com.github.nvelychenko.drupalextend.index.types.DrupalField
 import com.github.nvelychenko.drupalextend.util.isValidForIndex
 import com.github.nvelychenko.drupalextend.util.yml.keyPath
@@ -59,11 +60,12 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
             // @todo Improve directory handing
             if (psiFile is YAMLFile) {
                 val baseDir = inputData.project.guessProjectDir()
+                val configDir = Settings.getInstance(inputData.project).configDir
 
                 if (baseDir != null) {
                     val relativePath =
                         VfsUtil.getRelativePath(inputData.file, baseDir, '/') ?: return@DataIndexer map
-                    if (!relativePath.contains("config/sync")) {
+                    if (!relativePath.contains(configDir)) {
                         return@DataIndexer map
                     }
                 }
