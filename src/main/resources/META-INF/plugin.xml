@@ -35,7 +35,7 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <completion.contributor language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalContentEntityContributor"/>
+        <completion.contributor order="first" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalContentEntityContributor"/>
     </extensions>
 
     <depends>com.jetbrains.php</depends>
