@@ -1,7 +1,8 @@
 package com.github.nvelychenko.drupalextend.type
 
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
-import com.github.nvelychenko.drupalextend.extensions.getValue
+import com.github.nvelychenko.drupalextend.index.ConfigEntityIndex
+import com.github.nvelychenko.drupalextend.util.getValue
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -55,10 +56,15 @@ class ContentEntityFieldTypeProvider : PhpTypeProvider4 {
 
         val (entityTypeId, methodName) = expression.replace("#$key", "").split(splitKey)
 
-        return FileBasedIndex.getInstance().getValue(ContentEntityIndex.KEY, entityTypeId, project)
-            ?.let {
-                PhpType().add(it.fqn.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
-            }
+        val contentEntity =  FileBasedIndex.getInstance().getValue(ContentEntityIndex.KEY, entityTypeId, project)
+        if (contentEntity != null) {
+            return PhpType().add(contentEntity.fqn.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
+        }
+        val configEntity = FileBasedIndex.getInstance().getValue(ConfigEntityIndex.KEY, entityTypeId, project);
+        if (configEntity != null) {
+            return PhpType().add(configEntity.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
+        }
+        return null;
     }
 
     override fun getBySignature(

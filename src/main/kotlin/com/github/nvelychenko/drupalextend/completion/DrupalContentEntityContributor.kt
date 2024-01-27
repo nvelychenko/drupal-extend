@@ -1,6 +1,7 @@
 package com.github.nvelychenko.drupalextend.completion
 
 import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
+import com.github.nvelychenko.drupalextend.index.ConfigEntityIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
@@ -159,6 +160,17 @@ class DrupalContentEntityContributor : CompletionContributor() {
                             completionResultSet.addElement(
                                 LookupElementBuilder.create(it)
                                     .withTypeText(contentEntity.fqn, true)
+                            )
+                        }
+
+                    instance
+                        .getAllProjectKeys(ConfigEntityIndex.KEY, project)
+                        .forEach {
+                            val configEntityFqn = instance.getValue(ConfigEntityIndex.KEY, it, project) ?: return@forEach
+
+                            completionResultSet.addElement(
+                                LookupElementBuilder.create(it)
+                                    .withTypeText(configEntityFqn, true)
                             )
                         }
                 }
