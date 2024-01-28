@@ -265,21 +265,16 @@ class DrupalCompletionContributor : CompletionContributor() {
 
         val entityTypeId: String?
 
-        if (classReference.signature.contains(EntityStorageTypeProvider.Util.SPLIT_KEY)) {
-            entityTypeId =
-                classReference.signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore('.')
-        } else {
-            val globalTypes = classReference.globalType.types.map { it.replace("[]", "") }
+        val globalTypes = classReference.globalType.types.map { it.replace("[]", "") }
 
-            if (globalTypes.isEmpty()) return
+        if (globalTypes.isEmpty()) return
 
-            val entityTypeFqn = index.getAllProjectKeys(
-                ContentEntityFqnIndex.KEY, project
-            ).find { globalTypes.contains(it) } ?: return
+        val entityTypeFqn = index
+            .getAllProjectKeys(ContentEntityFqnIndex.KEY, project)
+            .find { globalTypes.contains(it) } ?: return
 
-            val contentEntity = index.getValue(ContentEntityFqnIndex.KEY, entityTypeFqn, project) ?: return
-            entityTypeId = contentEntity.entityTypeId
-        }
+        val contentEntity = index.getValue(ContentEntityFqnIndex.KEY, entityTypeFqn, project) ?: return
+        entityTypeId = contentEntity.entityTypeId
 
         val keys = index.getValue(ContentEntityIndex.KEY, entityTypeId, project)?.keys ?: return
 
