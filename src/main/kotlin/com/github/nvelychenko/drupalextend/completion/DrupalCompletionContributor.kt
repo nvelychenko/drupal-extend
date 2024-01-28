@@ -2,7 +2,6 @@ package com.github.nvelychenko.drupalextend.completion
 
 import com.github.nvelychenko.drupalextend.completion.providers.EntityStorageProvider
 import com.github.nvelychenko.drupalextend.completion.providers.FieldCompletionProvider
-import com.github.nvelychenko.drupalextend.completion.providers.MagicPropertyFieldCompletionProvider
 import com.github.nvelychenko.drupalextend.extensions.getAllProjectKeys
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex

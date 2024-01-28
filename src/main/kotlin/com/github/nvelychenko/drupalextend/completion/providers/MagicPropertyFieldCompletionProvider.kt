@@ -17,7 +17,7 @@ class MagicPropertyFieldCompletionProvider : FieldCompletionProvider() {
     /**
      * I don't want to show magic field at the top, hence such priority.
      */
-    override val priority = -20.0;
+    override val priority = -20.0
 
     override fun addCompletions(
         parameters: CompletionParameters,
