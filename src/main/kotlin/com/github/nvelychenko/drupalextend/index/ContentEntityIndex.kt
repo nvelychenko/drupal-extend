@@ -136,10 +136,10 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
 
         // @todo Implement better parsing for phpdoc.
         for (key in hardcodedKeys) {
-            resolvedKeys[key] = (getPhpDocParameter(contentEntityTypeDocText, key) ?: continue)
+            resolvedKeys[key] = (getPhpDocParameter(contentEntityTypeDocText, "\"${key}\"") ?: continue)
         }
 
-        val sqlStorageHandler = getPhpDocParameter(contentEntityTypeDocText, "storage") ?: "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage"
+        val sqlStorageHandler = getPhpDocParameter(contentEntityTypeDocText, "\"storage\"") ?: "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage"
 
         map[id] = DrupalContentEntity(id, phpClass.fqn, resolvedKeys, sqlStorageHandler)
     }

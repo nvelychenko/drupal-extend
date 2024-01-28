@@ -10,6 +10,9 @@ import fr.adrienbrault.idea.symfony2plugin.util.PhpElementsUtil
 import fr.adrienbrault.idea.symfony2plugin.util.PhpTypeProviderUtil
 
 
+/**
+ * Add support for \Drupal::service('database')->|
+ */
 class DrupalContainerTypeProvider : SymfonyContainerTypeProvider() {
 
     private val trimKey = '\u0182'

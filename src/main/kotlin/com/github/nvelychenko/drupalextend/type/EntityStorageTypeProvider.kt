@@ -1,17 +1,16 @@
 package com.github.nvelychenko.drupalextend.type
 
+import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
+import com.github.nvelychenko.drupalextend.patterns.Patterns
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider.Util.SPLITER_KEY
-import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.childrenOfType
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.PhpIndex
-import com.jetbrains.php.lang.parser.PhpElementTypes
-import com.jetbrains.php.lang.psi.PhpPsiUtil
 import com.jetbrains.php.lang.psi.elements.*
 import com.jetbrains.php.lang.psi.resolve.types.PhpType
 import com.jetbrains.php.lang.psi.resolve.types.PhpTypeProvider4
@@ -30,39 +29,27 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
         return Util.KEY
     }
 
-    override fun getType(psiElement: PsiElement): PhpType? {
-        if (DumbService.getInstance(psiElement.project).isDumb) {
-            return null
-        }
-
-        if (psiElement !is MethodReference) {
-            return null
-        }
-
-        if (psiElement.name != "getStorage") {
-            return null
-        }
-
-        if (!PlatformPatterns
-                .psiElement(PhpElementTypes.METHOD_REFERENCE)
-                .withChild(
-                    PlatformPatterns
-                        .psiElement(PhpElementTypes.PARAMETER_LIST)
-                        .withFirstChild(
-                            PlatformPatterns.psiElement(StringLiteralExpression::class.java),
-                        )
-                ).accepts(psiElement)
+    override fun getType(methodReference: PsiElement): PhpType? {
+        if (
+            DumbService.getInstance(methodReference.project).isDumb
+            || !Patterns.METHOD_WITH_FIRST_STRING_PARAMETER.accepts(methodReference)
         ) {
             return null
         }
 
-        val parameterList = PhpPsiUtil.getChildOfClass(psiElement, ParameterList::class.java)
-        if (parameterList !is ParameterList) return null
+        methodReference as MethodReference
+
+        if (methodReference.name != "getStorage") {
+            return null
+        }
+
+        val parameterList = methodReference.childrenOfType<ParameterList>().first()
 
         val firstParameter = parameterList.getParameter(0) as StringLiteralExpression
+
         if (firstParameter.contents.isEmpty()) return null
 
-        val signature = compressString(psiElement.signature).replace('|', SPLITER_KEY)
+        val signature = compressString(methodReference.signature).replace('|', SPLITER_KEY)
         return PhpType().add("#$key${signature}${Util.SPLIT_KEY}${firstParameter.contents}")
     }
 
@@ -91,7 +78,7 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
         val (originalSignature, entityTypeId) = parts
 
         val entityType =
-                FileBasedIndex.getInstance().getValue(ContentEntityIndex.KEY, entityTypeId, project) ?: return null
+            FileBasedIndex.getInstance().getValue(ContentEntityIndex.KEY, entityTypeId, project) ?: return null
 
         val phpIndex = PhpIndex.getInstance(project)
         val namedCollection = mutableListOf<PhpNamedElement>()
@@ -104,21 +91,20 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
         if (methods.isEmpty()) return null
 
         val entityTypeManagerInterface =
-                phpIndex.getInterfacesByFQN(entityTypeManagerInterface).takeIf { it.isNotEmpty() }?.first()
-                        ?: return null
+            phpIndex.getInterfacesByFQN(entityTypeManagerInterface).takeIf { it.isNotEmpty() }?.first()
+                ?: return null
 
         val entityStorageClass = phpIndex.getClassesByFQN(entityType.storageHandler).takeIf { it.isNotEmpty() }?.first()
-                ?: return null
+            ?: return null
 
         val type = PhpType()
         methods.forEach { method ->
             val clazz = method.containingClass ?: return@forEach
             if (clazz.isSuperInterfaceOf(entityTypeManagerInterface)) {
                 PhpType().add(entityStorageClass.implementsList.referenceElements.first())
-                entityStorageClass.implementsList.referenceElements.
-                        map {
-                            it.fqn
-                        }.forEach(type::add)
+                entityStorageClass.implementsList.referenceElements.map {
+                    it.fqn
+                }.forEach(type::add)
             }
         }
 

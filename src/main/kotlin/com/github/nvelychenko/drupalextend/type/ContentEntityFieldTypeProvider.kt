@@ -29,13 +29,13 @@ class ContentEntityFieldTypeProvider : PhpTypeProvider4 {
     }
 
     override fun getType(psiElement: PsiElement): PhpType? {
-        if (DumbService.getInstance(psiElement.project).isDumb) {
+        if (
+            DumbService.getInstance(psiElement.project).isDumb
+            || psiElement !is MethodReference || psiElement.isStatic
+            || !possibleMethods.containsKey(psiElement.name)
+            ) {
             return null
         }
-
-        if (psiElement !is MethodReference) return null
-
-        if (!possibleMethods.containsKey(psiElement.name)) return null
 
         val signature = psiElement.signature
 
@@ -44,8 +44,6 @@ class ContentEntityFieldTypeProvider : PhpTypeProvider4 {
         }
 
         val entityTypeId = signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore(".load")
-
-        if (entityTypeId.isEmpty()) return null
 
         return PhpType().add("#$key$entityTypeId$splitKey${psiElement.name}")
     }
@@ -56,14 +54,18 @@ class ContentEntityFieldTypeProvider : PhpTypeProvider4 {
 
         val (entityTypeId, methodName) = expression.replace("#$key", "").split(splitKey)
 
-        val contentEntity =  FileBasedIndex.getInstance().getValue(ContentEntityIndex.KEY, entityTypeId, project)
+        val fileBasedIndex = FileBasedIndex.getInstance()
+
+        val contentEntity =  fileBasedIndex.getValue(ContentEntityIndex.KEY, entityTypeId, project)
         if (contentEntity != null) {
             return PhpType().add(contentEntity.fqn.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
         }
-        val configEntity = FileBasedIndex.getInstance().getValue(ConfigEntityIndex.KEY, entityTypeId, project)
+
+        val configEntity = fileBasedIndex.getValue(ConfigEntityIndex.KEY, entityTypeId, project)
         if (configEntity != null) {
             return PhpType().add(configEntity.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
         }
+
         return null
     }
 
