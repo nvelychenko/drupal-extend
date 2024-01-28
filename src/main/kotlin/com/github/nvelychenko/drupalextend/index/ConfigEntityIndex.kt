@@ -9,7 +9,6 @@ import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
 import com.jetbrains.php.lang.PhpFileType
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment
-import com.jetbrains.php.lang.psi.PhpFile
 import com.jetbrains.php.lang.psi.elements.PhpClass
 
 class ConfigEntityIndex : FileBasedIndexExtension<String, String>() {
@@ -29,29 +28,18 @@ class ConfigEntityIndex : FileBasedIndexExtension<String, String>() {
                 return@DataIndexer map
             }
 
-            when (psiFile) {
-                is PhpFile -> processPhp(map, psiFile)
-            }
+            val phpClass = PsiTreeUtil.findChildOfType(psiFile, PhpClass::class.java)
+
+            phpClass
+                ?.takeIf {
+                    it.docComment is PhpDocComment && it.docComment!!.getTagElementsByName("@ConfigEntityType")
+                        .isNotEmpty()
+                }
+                ?.let { getPhpDocParameter(it.docComment!!.text, "id") }
+                ?.let { map[it] = phpClass.fqn }
 
             map
         }
-    }
-
-
-    private fun processPhp(map: HashMap<String, String>, phpFile: PhpFile) {
-        val phpClass = PsiTreeUtil.findChildOfType(phpFile, PhpClass::class.java) ?: return
-        if (phpClass.docComment !is PhpDocComment) return
-
-        val contentEntityTypes = (phpClass.docComment as PhpDocComment).getTagElementsByName("@ConfigEntityType")
-        if (contentEntityTypes.isEmpty()) {
-            return
-        }
-
-        val contentEntityTypeDocText = contentEntityTypes[0].text
-
-        val id = getPhpDocParameter(contentEntityTypeDocText, "id") ?: return
-
-        map[id] = phpClass.fqn
     }
 
     override fun getKeyDescriptor(): KeyDescriptor<String> = myKeyDescriptor
