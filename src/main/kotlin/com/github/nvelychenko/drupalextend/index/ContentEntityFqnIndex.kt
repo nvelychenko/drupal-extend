@@ -104,7 +104,7 @@ class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 11
+    override fun getVersion(): Int = 12
 
     companion object {
         val KEY = ID.create<String, ContentEntity>("com.github.nvelychenko.drupalextend.index.content_entity_fqn")

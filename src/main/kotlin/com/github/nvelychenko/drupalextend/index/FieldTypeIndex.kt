@@ -151,7 +151,7 @@ class FieldTypeIndex : FileBasedIndexExtension<String, DrupalFieldType>() {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 1
+    override fun getVersion(): Int = 2
 
     companion object {
         val KEY = ID.create<String, DrupalFieldType>("com.github.nvelychenko.drupalextend.index.field_type")
