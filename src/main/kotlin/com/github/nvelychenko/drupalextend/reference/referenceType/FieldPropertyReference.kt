@@ -39,7 +39,8 @@ class FieldPropertyReference(element: PsiElement, val entityTypeId: String, priv
         .mapNotNull { fileToElement(it) }
         .let(::createResults)
 
-    private fun fileToElement(file: Map.Entry<VirtualFile, String>) = psiManager.findFile(file.key)?.let { fileToElement(it, file.value) }
+    private fun fileToElement(file: Map.Entry<VirtualFile, String>) =
+        psiManager.findFile(file.key)?.let { fileToElement(it, file.value) }
 
     private fun fileToElement(file: PsiElement, path: String) = when (file) {
         is YAMLFile -> YAMLKeyValueFinder(path).findIn(file)?.value
