@@ -24,7 +24,7 @@ import com.jetbrains.php.lang.lexer.PhpTokenTypes
 import com.jetbrains.php.lang.parser.PhpElementTypes
 import com.jetbrains.php.lang.psi.elements.*
 
-class DrupalContentEntityContributor : CompletionContributor() {
+class DrupalCompletionContributor : CompletionContributor() {
 
     init {
         extend(
@@ -112,8 +112,8 @@ class DrupalContentEntityContributor : CompletionContributor() {
                         val fieldInstance = FileBasedIndex.getInstance().getValue(FieldsIndex.KEY, "${entityType}|${fieldName}", project) ?: return
                         val fieldType = FileBasedIndex.getInstance().getValue(FieldTypeIndex.KEY, fieldInstance.fieldType, project) ?: return
 
-                        val properties = HashMap<String, String>();
-                        properties.putAll(fieldType.properties);
+                        val properties = HashMap<String, String>()
+                        properties.putAll(fieldType.properties)
 
                         val fieldClassInstance = PhpIndex.getInstance(project).getClassesByFQN(fieldType.fqn).firstOrNull() ?: return
                         PhpClassHierarchyUtils.processSuperClasses(fieldClassInstance, false, true) {
@@ -201,11 +201,11 @@ class DrupalContentEntityContributor : CompletionContributor() {
 
                     val parameterList = element.parent as ParameterList
                     if (!parameterList.parameters.first().isEquivalentTo(element)) {
-                        return;
+                        return
                     }
                     val methodReference = parameterList.parent as MethodReference
 
-                    var allowedMethods = arrayOf(
+                    val allowedMethods = arrayOf(
                         "getAccessControlHandler",
                         "getStorage",
                         "getViewBuilder",

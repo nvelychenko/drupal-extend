@@ -1,6 +1,7 @@
 package com.github.nvelychenko.drupalextend.index
 
-import com.github.nvelychenko.drupalextend.util.isValidForIndex
+import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
+import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
@@ -14,7 +15,7 @@ import com.jetbrains.php.lang.psi.elements.PhpClass
 class ConfigEntityIndex : FileBasedIndexExtension<String, String>() {
     private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
 
-    private val myDataExternalizer: DataExternalizer<String> = EnumeratorStringDescriptor.INSTANCE;
+    private val myDataExternalizer: DataExternalizer<String> = EnumeratorStringDescriptor.INSTANCE
     override fun getName(): ID<String, String> {
         return KEY
     }
@@ -50,14 +51,7 @@ class ConfigEntityIndex : FileBasedIndexExtension<String, String>() {
 
         val id = getPhpDocParameter(contentEntityTypeDocText, "id") ?: return
 
-        map[id] = phpClass.fqn;
-    }
-
-    private fun getPhpDocParameter(phpDocText: String, id: String): String? {
-        @Suppress("RegExpUnnecessaryNonCapturingGroup")
-        val entityTypeMatch = Regex("${id}(?:\"?)\\s*=\\s*\"([^\"]+)\"").find(phpDocText)
-
-        return entityTypeMatch?.groups?.get(1)?.value
+        map[id] = phpClass.fqn
     }
 
     override fun getKeyDescriptor(): KeyDescriptor<String> = myKeyDescriptor

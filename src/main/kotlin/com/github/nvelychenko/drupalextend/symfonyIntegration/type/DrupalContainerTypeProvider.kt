@@ -15,11 +15,10 @@ class DrupalContainerTypeProvider : SymfonyContainerTypeProvider() {
     private val trimKey = '\u0182'
 
     override fun getKey(): Char {
-        return '\u9955';
+        return '\u9955'
     }
 
     override fun getType(e: PsiElement): PhpType? {
-        // container calls are only on "get" methods
         if (e !is MethodReference || !PhpElementsUtil.isMethodWithFirstStringOrFieldReference(e, "service")) {
             return null
         }

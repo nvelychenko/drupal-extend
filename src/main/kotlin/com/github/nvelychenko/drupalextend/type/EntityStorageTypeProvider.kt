@@ -35,7 +35,6 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
             return null
         }
 
-        // container calls are only on "get" methods
         if (psiElement !is MethodReference) {
             return null
         }

@@ -39,10 +39,10 @@ class StaticContentEntityTypeProvider : PhpTypeProvider4 {
     }
 
     override fun complete(expression: String?, project: Project?): PhpType? {
-        if (expression == null || project == null || !expression.contains(key))
+        if (expression == null || project == null || !expression.contains(splitKey))
             return null
 
-        val (signature, methodName) = expression.replace("#$key", "").split(splitKey)
+        val (signature, methodName) = expression.substring(2).split(splitKey)
 
         val fileBasedIndex = FileBasedIndex.getInstance()
 
