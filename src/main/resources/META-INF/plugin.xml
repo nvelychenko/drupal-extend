@@ -24,10 +24,10 @@
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex"/>
 
-        <psi.referenceContributor implementation="com.github.nvelychenko.drupalextend.reference.ContentEntity"
+        <psi.referenceContributor implementation="com.github.nvelychenko.drupalextend.reference.DrupalReferenceContributor"
                                   language="PHP"/>
 
-        <completion.contributor order="first" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalCompletionContributor"/>
+        <completion.contributor language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalCompletionContributor"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.jetbrains.php">
