@@ -7,13 +7,23 @@
 The plugin is enhancement for your Drupal development experience.
 
 ## Features
-* Autocomplete for Content Entity Storage (Config Storage WIP)
+* Autocomplete for Content/Config Entities Storage (eck support)
 
-* Fields autocomplete (for now config directory is hardcoded to the `config/sync`, project setting WIP)
+* Fields autocomplete (for now config directory is hardcoded to the `config/sync`, project setting is WIP)
+
+* Field properties autocomplete e.g. `$node->get('field_user')->en|` it will autocomplete **entity** in this case.
 
 * References for Storages and Fields (Ctrl + Click)
 
-* TypeProvider for EntityStorageInterface::load/loadMultiple/loadByProperties
+* TypeProvider for `$storage->load/loadMultiple/loadByProperties` e.g. IDE will know what object(s) is returned by any of these methods.
+
+* TypeProvider for static `Node::load/create/loadMultiple` methods
+
+* TypeProvider for `\Drupal::service('database')->|`. So ide know what object is returned by this `::service` method.
+
+* WIP Autocomplete for `#theme`
+
+* etc.
 
 ## Installation
 

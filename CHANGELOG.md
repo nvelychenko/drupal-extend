@@ -7,6 +7,17 @@
 ### Added
 
 - Integration with symfony service type provider for \Drupal::service
+- Config entity support (autocomplete, references)
+- Field properties autocomplete e.g. $node->get('field_address')->addr| (it will autocomplete address_line1, address_line2)
+- Node::load/create/loadMultiple type provider
+- Almost all base fields are autocompleted now. (fields specified in a few static methods on the same class WIP)
+- Storage autocomplete for getAccessControlHandler, getStorage, getViewBuilder, getListBuilder, getFormObject, getRouteProviders, hasHandler methods.
+- Type provider for storages again work! But now it provider only interfaces
+
+### Fixed
+
+- Fixed bug related to broken entities type provider.
+- Fields autocomplete in non inappropriate places.
 
 ## [0.0.5]
 
