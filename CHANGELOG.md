@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2024-01-28
+
 ### Added
 
 - Integration with symfony service type provider for \Drupal::service
@@ -12,12 +14,12 @@
 - Node::load/create/loadMultiple type provider
 - Almost all base fields are autocompleted now. (fields specified in a few static methods on the same class WIP)
 - Storage autocomplete for getAccessControlHandler, getStorage, getViewBuilder, getListBuilder, getFormObject, getRouteProviders, hasHandler methods.
-- Type provider for storages again work! But now it provider only interfaces
+- Type provider for storage again work! But now it provider only interfaces
 
 ### Fixed
 
 - Fixed bug related to broken entities type provider.
-- Fields autocomplete in non inappropriate places.
+- Fields autocomplete in inappropriate places.
 
 ## [0.0.5]
 
@@ -34,5 +36,6 @@
 - Content entity provider was not working in certain circumstances
 - Deprecated usage of baseDir
 
-[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/0.0.5...HEAD
+[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.0.5...v0.1.0
 [0.0.5]: https://github.com/nvelychenko/drupal-extend/commits/0.0.5
