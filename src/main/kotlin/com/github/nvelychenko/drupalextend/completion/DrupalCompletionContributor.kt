@@ -31,13 +31,6 @@ class DrupalCompletionContributor : CompletionContributor() {
         // \Drupal::entityTypeManager->getStorage('no|
         extend(CompletionType.BASIC, Patterns.LEAF_INSIDE_METHOD_PARAMETER, EntityStorageProvider())
 
-        // $node->field_|
-        extend(
-            CompletionType.BASIC,
-            PlatformPatterns.psiElement().withLanguage(PhpLanguage.INSTANCE),
-            MagicPropertyFieldCompletionProvider()
-        )
-
         // $node->set('fi
         // $node->get('fi|
         extend(CompletionType.BASIC, Patterns.LEAF_INSIDE_METHOD_PARAMETER, FieldCompletionProvider())
@@ -127,7 +120,7 @@ class DrupalCompletionContributor : CompletionContributor() {
                         completionResultSet.addElement(
                             PrioritizedLookupElement.withPriority(
                                 LookupElementBuilder.create(it.key).withTypeText(it.value).withBoldness(true),
-                                Double.MAX_VALUE,
+                                100.0,
                             ),
                         )
                     }

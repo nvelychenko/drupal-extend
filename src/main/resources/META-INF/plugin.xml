@@ -27,7 +27,8 @@
         <psi.referenceContributor implementation="com.github.nvelychenko.drupalextend.reference.DrupalReferenceContributor"
                                   language="PHP"/>
 
-        <completion.contributor language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalCompletionContributor"/>
+        <completion.contributor order="first" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalCompletionContributor"/>
+        <completion.contributor order="last" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.FieldMagicMethodCompletionContributor"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.jetbrains.php">
