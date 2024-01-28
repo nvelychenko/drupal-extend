@@ -43,7 +43,7 @@ class EntityStorageProvider : CompletionProvider<CompletionParameters>() {
             "getFormObject",
             "getRouteProviders",
             "hasHandler",
-            "getDefinition",
+            // @todo getDefinition does not work
         )
 
         if (!allowedMethods.contains(methodReference.name)) return
