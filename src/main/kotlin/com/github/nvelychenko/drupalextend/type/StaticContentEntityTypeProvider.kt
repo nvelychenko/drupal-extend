@@ -22,7 +22,7 @@ class StaticContentEntityTypeProvider : PhpTypeProvider4 {
 
     private val possibleMethods = mutableMapOf(
         Pair("load", ""),
-        Pair("create", "[]"),
+        Pair("create", ""),
         Pair("loadMultiple", "[]"),
     )
 
