@@ -4,11 +4,13 @@
 
 ## [Unreleased]
 
-## [0.1.0] - 2024-01-28
-
 ### Added
 
 - Autocomplete for render elements and their properties.
+
+## [0.1.0] - 2024-01-28
+
+### Added
 
 - Integration with symfony service type provider for \Drupal::service
 - Config entity support (autocomplete, references)
