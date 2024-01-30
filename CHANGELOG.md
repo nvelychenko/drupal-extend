@@ -4,17 +4,9 @@
 
 ## [Unreleased]
 
-### Added
-
-- Autocomplete for render elements and their properties.
-
-### Fixed
-
-- Annotator bug
-
 ## [0.2.0] - 2024-01-30
 
-### Added 
+### Added
 
 - Autocomplete for render elements and their properties.
 
