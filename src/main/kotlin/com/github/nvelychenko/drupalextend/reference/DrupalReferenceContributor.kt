@@ -8,10 +8,12 @@ import com.intellij.psi.PsiReferenceRegistrar
 
 class DrupalReferenceContributor : PsiReferenceContributor() {
     override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
-        // \Drupal::entityTypeManager()->getStorage('ENTITY_TYPE')
+        // \Drupal::entityTypeManager()->getStorage('node')
+        //                                             ↑
         registrar.registerReferenceProvider(STRING_INSIDE_METHOD_PARAMETER, EntityStorageReferenceProvider())
 
         // $node->get('field_body')
+        //                ↑
         registrar.registerReferenceProvider(STRING_INSIDE_METHOD_PARAMETER, FieldReferenceProvider())
     }
 }

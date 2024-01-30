@@ -13,8 +13,11 @@ import com.jetbrains.php.lang.psi.elements.PhpNamedElement
 import com.jetbrains.php.lang.psi.resolve.types.PhpType
 import com.jetbrains.php.lang.psi.resolve.types.PhpTypeProvider4
 
-
-class ContentEntityFieldTypeProvider : PhpTypeProvider4 {
+/**
+ * $paragraph = \Drupal::entityTypeManager()->getStorage('paragraph')->load(1);
+ *     ↑
+ */
+class EntityFromStorageTypeProvider : PhpTypeProvider4 {
 
     private val possibleMethods = mutableMapOf(
         Pair("load", ""),

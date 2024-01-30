@@ -21,6 +21,10 @@ import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
 
+/**
+ * $entity_storage = \Drupal::entityTypeManager()->getStorage('node');
+ *       ↑
+ */
 class EntityStorageTypeProvider : PhpTypeProvider4 {
 
     private val entityTypeManagerInterface = "\\Drupal\\Core\\Entity\\EntityTypeManagerInterface"

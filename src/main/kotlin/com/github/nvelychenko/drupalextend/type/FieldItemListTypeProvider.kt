@@ -17,7 +17,11 @@ import com.jetbrains.php.lang.psi.resolve.types.PhpTypeProvider4
 import org.apache.commons.lang3.StringUtils
 
 
-class FieldPropertyTypeProvider : PhpTypeProvider4 {
+/**
+ * $item_list = $entity->get('field_foo');
+ *     ↑
+ */
+class FieldItemListTypeProvider : PhpTypeProvider4 {
 
     private val endKey = '\u3339'
 

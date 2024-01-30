@@ -28,6 +28,12 @@
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.FieldsIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.RenderElementIndex"/>
+
+        <!-- @todo Implemnt language injector -->
+<!--        <multiHostInjector implementation="com.github.nvelychenko.drupalextend.lang.RenderElementInjector"/>-->
+
+        <annotator language="PHP" implementationClass="com.github.nvelychenko.drupalextend.psi.RenderElementAnnotator"/>
 
         <psi.referenceContributor implementation="com.github.nvelychenko.drupalextend.reference.DrupalReferenceContributor"
                                   language="PHP"/>
@@ -38,9 +44,9 @@
 
     <extensions defaultExtensionNs="com.jetbrains.php">
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider"/>
-        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.ContentEntityFieldTypeProvider"/>
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityFromStorageTypeProvider"/>
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.StaticContentEntityTypeProvider"/>
-        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.FieldPropertyTypeProvider"/>
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.FieldItemListTypeProvider"/>
     </extensions>
 
     <depends>com.jetbrains.php</depends>
