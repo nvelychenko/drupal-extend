@@ -48,45 +48,54 @@ class EntityStorageProvider : CompletionProvider<CompletionParameters>() {
 
         if (!allowedMethods.contains(methodReference.name)) return
 
-        val method = methodReference.resolve() ?: return
+        val methods = methodReference.multiResolve(false)
 
-        if (method !is Method) return
+        if (methods.isEmpty()) return
 
-        val methodClass = method.containingClass as PhpClass
-        val project = method.project
+        for (result in methods) {
+            val method = result.element
+            if (method !is Method) continue
 
-        val entityReferences =
-            PhpIndex.getInstance(project)
-                .getInterfacesByFQN("\\Drupal\\Core\\Entity\\EntityTypeManagerInterface").firstOrNull()
-                ?: return
+            val methodClass = method.containingClass as PhpClass
 
-        if (!methodClass.isSuperInterfaceOf(entityReferences)) return
+            if (methodClass.isInterface) continue
 
-        val instance = FileBasedIndex.getInstance()
+            val project = method.project
 
-        instance
-            .getAllProjectKeys(ContentEntityIndex.KEY, project)
-            .filter { !it.contains("\\") }
-            .forEach {
-                val contentEntity = instance.getValue(ContentEntityIndex.KEY, it, project) ?: return@forEach
+            val entityReferences =
+                PhpIndex.getInstance(project)
+                    .getInterfacesByFQN("\\Drupal\\Core\\Entity\\EntityTypeManagerInterface").firstOrNull()
+                    ?: continue
 
-                completionResultSet.addElement(
-                    LookupElementBuilder.create(it)
-                        .withTypeText(contentEntity.fqn, true)
-                )
-            }
+            if (!methodClass.isSuperInterfaceOf(entityReferences)) continue
 
-        instance
-            .getAllProjectKeys(ConfigEntityIndex.KEY, project)
-            .forEach {
-                val configEntityFqn =
-                    instance.getValue(ConfigEntityIndex.KEY, it, project) ?: return@forEach
+            val instance = FileBasedIndex.getInstance()
 
-                completionResultSet.addElement(
-                    LookupElementBuilder.create(it)
-                        .withTypeText(configEntityFqn, true)
-                )
-            }
+            instance
+                .getAllProjectKeys(ContentEntityIndex.KEY, project)
+                .filter { !it.contains("\\") }
+                .forEach {
+                    val contentEntity = instance.getValue(ContentEntityIndex.KEY, it, project) ?: return@forEach
+
+                    completionResultSet.addElement(
+                        LookupElementBuilder.create(it)
+                            .withTypeText(contentEntity.fqn, true)
+                    )
+                }
+
+            instance
+                .getAllProjectKeys(ConfigEntityIndex.KEY, project)
+                .forEach {
+                    val configEntityFqn =
+                        instance.getValue(ConfigEntityIndex.KEY, it, project) ?: return@forEach
+
+                    completionResultSet.addElement(
+                        LookupElementBuilder.create(it)
+                            .withTypeText(configEntityFqn, true)
+                    )
+                }
+        }
+
     }
 
 }
