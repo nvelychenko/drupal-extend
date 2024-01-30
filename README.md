@@ -23,6 +23,8 @@ The plugin is enhancement for your Drupal development experience.
 
 * WIP Autocomplete for `#theme`
 
+* Autocomplete for Render Element and its properties e.g. `#type' => 'checkbox', '#tit|`
+
 * etc.
 
 ## Installation
