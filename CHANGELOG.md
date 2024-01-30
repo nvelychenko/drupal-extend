@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- Autocomplete for render elements and their properties.
+- Ability to try to find entity from storage only knowing its interface/class.
+
+### Fixed
+
+- Storage autocomplete in case if symfony is enabled, and storage is returned from service.
+- Annotator bug
+
 ## [0.2.0] - 2024-01-30
 
 ### Added
