@@ -37,7 +37,7 @@ class RenderElementAnnotator : Annotator {
         val key = element.key as StringLiteralExpression
         val value = element.value as StringLiteralExpression
 
-        if (key.contents != "#type" && value.contents.isEmpty()) {
+        if (key.contents != "#type" || value.contents.isEmpty()) {
             return
         }
 
