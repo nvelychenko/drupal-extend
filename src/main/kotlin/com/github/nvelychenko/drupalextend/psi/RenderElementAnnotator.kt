@@ -42,13 +42,19 @@ class RenderElementAnnotator : Annotator {
         }
 
         val project = element.project
-        val renderElement = FileBasedIndex.getInstance().getValue(RenderElementIndex.KEY, value.contents, project) ?: return
+        val renderElement =
+            FileBasedIndex.getInstance().getValue(RenderElementIndex.KEY, value.contents, project) ?: return
 
-        val renderElementClass = PhpIndex.getInstance(project).getClassesByFQN(renderElement.typeClass).firstOrNull() ?: return
+        val renderElementClass =
+            PhpIndex.getInstance(project).getClassesByFQN(renderElement.typeClass).firstOrNull() ?: return
 
         var isFormElement = false
         PhpClassHierarchyUtils.processSuperClasses(renderElementClass, false, true) {
             isFormElement = it.fqn == "\\Drupal\\Core\\Render\\Element\\FormElement"
+
+            if (isFormElement) {
+                return@processSuperClasses false
+            }
 
             if (it.fqn == "\\Drupal\\Core\\Render\\Element\\RenderElement") {
                 return@processSuperClasses false
@@ -58,9 +64,9 @@ class RenderElementAnnotator : Annotator {
         }
 
         val tooltip = if (isFormElement) {
-            "RenderElement"
-        } else {
             "FormElement"
+        } else {
+            "RenderElement"
         }
 
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
