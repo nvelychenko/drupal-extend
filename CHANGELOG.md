@@ -4,15 +4,13 @@
 
 ## [Unreleased]
 
-### Added
+## [0.3.0] - 2024-01-30
 
-- Autocomplete for render elements and their properties.
-- Ability to try to find entity from storage only knowing its interface/class.
+Added:
 
-### Fixed
-
-- Storage autocomplete in case if symfony is enabled, and storage is returned from service.
-- Annotator bug
+- Implemented ability to try to find entity from storage only knowing its interface/class.
+- annotator bug
+- storage autocomplete in case Symfony is enabled, and storage is returned from service.
 
 ## [0.2.0] - 2024-01-30
 
@@ -52,7 +50,8 @@
 - Content entity provider was not working in certain circumstances
 - Deprecated usage of baseDir
 
-[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/nvelychenko/drupal-extend/compare/0.0.5...v0.1.0
 [0.0.5]: https://github.com/nvelychenko/drupal-extend/commits/0.0.5
