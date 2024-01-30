@@ -104,8 +104,7 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
         val type = PhpType()
         methods.forEach { method ->
             val clazz = method.containingClass ?: return@forEach
-            if (clazz.isSuperInterfaceOf(entityTypeManagerInterface)) {
-                PhpType().add(entityStorageClass.implementsList.referenceElements.first())
+            if (clazz.fqn == entityTypeManagerInterface.fqn || clazz.isSuperInterfaceOf(entityTypeManagerInterface)) {
                 entityStorageClass.implementsList.referenceElements.map {
                     it.fqn
                 }.forEach(type::add)

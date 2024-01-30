@@ -1,10 +1,15 @@
 package com.github.nvelychenko.drupalextend.index
 
-import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
+import com.github.nvelychenko.drupalextend.extensions.getModificationTrackerForIndexId
+import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
+import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
@@ -139,7 +144,8 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
             resolvedKeys[key] = (getPhpDocParameter(contentEntityTypeDocText, "\"${key}\"") ?: continue)
         }
 
-        val sqlStorageHandler = getPhpDocParameter(contentEntityTypeDocText, "\"storage\"") ?: "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage"
+        val sqlStorageHandler = getPhpDocParameter(contentEntityTypeDocText, "\"storage\"")
+            ?: "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage"
 
         map[id] = DrupalContentEntity(id, phpClass.fqn, resolvedKeys, sqlStorageHandler)
     }
@@ -158,6 +164,24 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
 
     companion object {
         val KEY = ID.create<String, DrupalContentEntity>("com.github.nvelychenko.drupalextend.index.content_types")
+
+        private val index by lazy { FileBasedIndex.getInstance() }
+
+        @Synchronized
+        fun getAllHandlers(project: Project): HashMap<String, DrupalContentEntity> {
+            return CachedValuesManager.getManager(project).getCachedValue(project) {
+                val results = hashMapOf<String, DrupalContentEntity>()
+
+                index.getAllKeys(KEY, project).forEach {
+                    index.getValue(KEY, it, project)?.let { contentEntity ->
+                        results[contentEntity.storageHandler] = contentEntity
+                    }
+                }
+
+                CachedValueProvider.Result.create(results, getModificationTrackerForIndexId(project, KEY, index))
+            }
+        }
+
     }
 
 }

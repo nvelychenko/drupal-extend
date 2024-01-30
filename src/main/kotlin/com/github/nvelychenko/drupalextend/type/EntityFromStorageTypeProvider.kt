@@ -1,13 +1,17 @@
 package com.github.nvelychenko.drupalextend.type
 
 import com.github.nvelychenko.drupalextend.extensions.getValue
-import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
+import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.index.ConfigEntityIndex
+import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
+import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.jsonSchema.impl.nestedCompletions.letIf
+import com.jetbrains.php.PhpClassHierarchyUtils
+import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.MethodReference
 import com.jetbrains.php.lang.psi.elements.PhpNamedElement
 import com.jetbrains.php.lang.psi.resolve.types.PhpType
@@ -26,6 +30,7 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
     )
 
     private val splitKey = '\u0421'
+    private val unclearKey = '\u0422'
 
     override fun getKey(): Char {
         return '\u0420'
@@ -36,14 +41,14 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
             DumbService.getInstance(psiElement.project).isDumb
             || psiElement !is MethodReference || psiElement.isStatic
             || !possibleMethods.containsKey(psiElement.name)
-            ) {
+        ) {
             return null
         }
 
         val signature = psiElement.signature
 
         if (!signature.contains(EntityStorageTypeProvider.Util.SPLIT_KEY)) {
-            return null
+            return PhpType().add("#$key$signature$unclearKey${psiElement.name}")
         }
 
         val entityTypeId = signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore(".load")
@@ -52,14 +57,26 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
     }
 
     override fun complete(expression: String?, project: Project?): PhpType? {
-        if (expression == null || project == null || !expression.contains(key))
+        if (expression == null || project == null)
             return null
 
-        val (entityTypeId, methodName) = expression.replace("#$key", "").split(splitKey)
+        val clearedExpression = expression.substring(2)
+
+        val entityTypeId: String?
+        val methodName: String
+        if (clearedExpression.contains(splitKey)) {
+            val split = clearedExpression.split(splitKey)
+            entityTypeId = split[0]
+            methodName = split[1]
+        } else {
+            val result = unknownStorageProcess(clearedExpression, project) ?: return null
+            entityTypeId = result.second
+            methodName = result.first
+        }
 
         val fileBasedIndex = FileBasedIndex.getInstance()
 
-        val contentEntity =  fileBasedIndex.getValue(ContentEntityIndex.KEY, entityTypeId, project)
+        val contentEntity = fileBasedIndex.getValue(ContentEntityIndex.KEY, entityTypeId, project)
         if (contentEntity != null) {
             return PhpType().add(contentEntity.fqn.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
         }
@@ -70,7 +87,57 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
         }
 
         return null
+
     }
+
+    /**
+     * In case if only storage is present with getStorage.
+     */
+    private fun unknownStorageProcess(expression: String, project: Project): Pair<String, String>? {
+        val (signature, methodName) = expression.split(unclearKey)
+
+        val phpIndex = PhpIndex.getInstance(project)
+        val classes = mutableSetOf<String>()
+        for (partialSignature in signature.split('|')) {
+            if (partialSignature.contains("#M#C") && partialSignature.contains(".$methodName")) {
+                classes.add(partialSignature.substringAfter("#M#C").substringBefore(".$methodName"))
+            }
+        }
+
+        val entityStorageInterface =
+            phpIndex.getInterfacesByFQN("\\Drupal\\Core\\Entity\\EntityStorageInterface").firstOrNull() ?: return null
+
+        val fileBasedIndex = FileBasedIndex.getInstance()
+
+        classes.forEach { classFqn ->
+            fileBasedIndex.getValue(ContentEntityFqnIndex.KEY, classFqn, project)
+                ?.let { return Pair(methodName, it.entityTypeId) }
+
+            if (classFqn == "\\Drupal\\Core\\Entity\\EntityStorageInterface") return@forEach
+
+            var clazz = phpIndex.getAnyByFQN(classFqn).firstOrNull() ?: return@forEach
+
+            if (clazz.isInterface && !classFqn.startsWith("\\Drupal\\Core\\Entity") && classFqn.contains("StorageInterface")) {
+                PhpClassHierarchyUtils.getDirectSubclasses(clazz).takeIf { it.size == 1 }?.first()
+                    ?.let { clazz = it }
+            }
+
+            if (clazz.isInterface || clazz.fqn == "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage") {
+                return@forEach
+            }
+
+            if (clazz.isSuperInterfaceOf(entityStorageInterface)) {
+                val allHandlers = ContentEntityIndex.getAllHandlers(project)
+                val fqn = clazz.fqn
+                val contentEntity = allHandlers[fqn] ?: allHandlers[fqn.substring(1)] ?: return@forEach
+
+                return Pair(methodName, contentEntity.entityTypeId)
+            }
+        }
+
+        return null
+    }
+
 
     override fun getBySignature(
         expression: String,
