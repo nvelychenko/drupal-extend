@@ -13,7 +13,11 @@ The plugin is enhancement for your Drupal development experience.
 
 * Field properties autocomplete e.g. `$node->get('field_user')->en|` it will autocomplete **entity** in this case.
 
+* Render element types autocomplete and their properties.
+
 * References for Storages and Fields (Ctrl + Click)
+
+* Reference for Render element type.
 
 * TypeProvider for `$storage->load/loadMultiple/loadByProperties` e.g. IDE will know what object(s) is returned by any of these methods.
 
