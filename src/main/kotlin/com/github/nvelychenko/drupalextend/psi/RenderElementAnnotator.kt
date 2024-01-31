@@ -1,11 +1,15 @@
 package com.github.nvelychenko.drupalextend.psi
 
 import com.github.nvelychenko.drupalextend.extensions.getValue
+import com.github.nvelychenko.drupalextend.icon.DrupalIcons
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
+import com.intellij.codeInsight.daemon.DefaultGutterIconNavigationHandler
+import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.indexing.FileBasedIndex
@@ -69,9 +73,20 @@ class RenderElementAnnotator : Annotator {
             "RenderElement"
         }
 
-        holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+        val annotation = holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
             .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.IDENTIFIER)
             .tooltip(tooltip)
-            .create()
+
+        // Create an annotation with a gutter icon renderer
+        renderElementClass.docComment?.getTagElementsByName("@${tooltip}")
+            ?.takeIf { it.isNotEmpty() }
+            ?.let {
+                val navHandler = DefaultGutterIconNavigationHandler<PsiElement>(mutableListOf(it.first()), tooltip)
+                val lmi = LineMarkerInfo(element, element.textRange, DrupalIcons.HASH_ICON,
+                    null, navHandler, GutterIconRenderer.Alignment.CENTER) { tooltip }
+                annotation.gutterIconRenderer(LineMarkerInfo.LineMarkerGutterIconRenderer(lmi))
+            }
+
+        annotation.create()
     }
 }

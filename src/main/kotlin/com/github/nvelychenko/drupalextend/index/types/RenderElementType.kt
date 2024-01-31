@@ -42,12 +42,12 @@ data class RenderElementType(
     }
 
     @kotlinx.serialization.Serializable
-    data class RenderElementTypeProperty(val id: String, val type: String? = null, val doc: String? = null) {
+    data class RenderElementTypeProperty(val id: String, val priority: Double = 0.0, val type: String? = null, val doc: String? = null) {
         override fun equals(other: Any?): Boolean {
             return if (this === other) {
                 true
             } else if (other != null && other is RenderElementTypeProperty) {
-                this.id == other.id && this.type == other.type && this.doc == other.doc
+                this.id == other.id && this.type == other.type && this.doc == other.doc && this.priority == other.priority
             } else {
                 false
             }
@@ -59,6 +59,7 @@ data class RenderElementType(
                     this.id,
                     this.type,
                     this.doc,
+                    this.priority,
                 )
             )
         }

@@ -60,7 +60,7 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
                 var properties = getAdditionalParametersFromDoc(docCommentText)
 
                 if (phpClass.fqn == "\\Drupal\\Core\\Render\\Element\\FormElement") {
-                    properties += arrayOf(RenderElementTypeProperty("name", "string"))
+                    properties += arrayOf(RenderElementTypeProperty("name", type = "string"))
                 }
                 map[phpClass.fqn] = RenderElementType(phpClass.fqn, phpClass.fqn, properties)
             } else {
@@ -95,7 +95,7 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
             } ?: return
 
         if (docCommentString.contains(" * - #")) {
-            parameters = getAdditionalParametersFromDoc(docCommentString) + parameters
+            parameters = getAdditionalParametersFromDoc(docCommentString, 10.0) + parameters
         }
 
         val renderElementIdId = renderElement.text.substringAfter('"').substringBefore('"')
@@ -109,7 +109,7 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
         expression.hashElements.forEach { hashElement ->
             val key = hashElement.key
             if (key is StringLiteralExpression) {
-                parameters.add(RenderElementTypeProperty(key.contents, null, null))
+                parameters.add(RenderElementTypeProperty(key.contents, 10.0,null, null))
             }
 
         }
@@ -126,14 +126,14 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
             val indexValue = index.value
 
             if (indexValue is StringLiteralExpression) {
-                parameters.add(RenderElementTypeProperty(indexValue.contents, null, null))
+                parameters.add(RenderElementTypeProperty(indexValue.contents, 10.0,null, null))
             }
         }
 
         return parameters.toTypedArray()
     }
 
-    private fun getAdditionalParametersFromDoc(docCommentText: String): Array<RenderElementTypeProperty> {
+    private fun getAdditionalParametersFromDoc(docCommentText: String, defaultPriority: Double = 0.0): Array<RenderElementTypeProperty> {
         val doc = docCommentText.replace(docCommentText.substringBefore(" * - #"), "")
 
 
@@ -154,7 +154,7 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
     //                document.substringAfter("${id}: ").trim()
     //            }
 
-            parameters.add(RenderElementTypeProperty(id, type, null))
+            parameters.add(RenderElementTypeProperty(id, defaultPriority ,type, null))
         }
         return parameters.toTypedArray()
     }
@@ -169,7 +169,7 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 0
+    override fun getVersion(): Int = 1
 
     companion object {
         val KEY = ID.create<String, RenderElementType>("com.github.nvelychenko.drupalextend.index.render_element")

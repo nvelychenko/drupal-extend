@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Line marker for Render/Form element
+- Completion priority for direct properties.
+
 ## [0.3.0] - 2024-01-30
 
 Added:

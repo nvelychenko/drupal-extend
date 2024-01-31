@@ -18,7 +18,6 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.elementType
 import com.intellij.util.ProcessingContext
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.PhpClassHierarchyUtils
@@ -139,8 +138,6 @@ class DrupalCompletionContributor : CompletionContributor() {
 
                     val array = PsiTreeUtil.getParentOfType(leaf, ArrayCreationExpression::class.java)!!
 
-                    val isArrayKey = leaf.parent.parent.elementType == PhpElementTypes.ARRAY_KEY
-
                     val typeElement = array.hashElements.find {
                         val key = it.key
                         key is StringLiteralExpression && key.contents == "#type" && it.value is StringLiteralExpression
@@ -172,18 +169,13 @@ class DrupalCompletionContributor : CompletionContributor() {
 
                     properties.forEach {
                         completionResultSet.addElement(
-                            LookupElementBuilder.create(it.id.replace("#", ""))
-                                .withTypeText(it.type)
-                                .withInsertHandler(RenderElementTypeInsertionHandler())
-//                                .withRenderer(
-//                                    object : LookupElementRenderer<LookupElement>() {
-//                                        override fun renderElement(
-//                                            element: LookupElement,
-//                                            presentation: LookupElementPresentation
-//                                        ) {
-//                                            presentation.itemText = "#${element.lookupString}"
-//                                        }
-//                                    })
+                            PrioritizedLookupElement.withPriority(
+                                LookupElementBuilder.create(it.id.replace("#", ""))
+                                    .withTypeText(it.type)
+                                    .withBoldness(it.priority > 0.0)
+                                    .withInsertHandler(RenderElementTypeInsertionHandler()),
+                                it.priority
+                            )
                         )
                     }
                 }
