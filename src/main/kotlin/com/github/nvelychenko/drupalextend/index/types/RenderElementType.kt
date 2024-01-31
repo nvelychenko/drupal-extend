@@ -8,7 +8,8 @@ import java.util.*
 data class RenderElementType(
     val typeId: String,
     val typeClass: String,
-    val properties: Array<RenderElementTypeProperty>
+    val properties: Array<RenderElementTypeProperty>,
+    val renderElementType: String,
 ): Serializable {
     override fun equals(other: Any?): Boolean {
         return if (this === other) {
@@ -25,7 +26,7 @@ data class RenderElementType(
                     equals = false
                 }
             }
-            this.typeId == other.typeId && this.typeClass == other.typeClass && equals
+            this.typeId == other.typeId && this.typeClass == other.typeClass && equals && this.renderElementType == other.renderElementType
         } else {
             false
         }
@@ -35,6 +36,7 @@ data class RenderElementType(
         val builder = HashCodeBuilder()
             .append(this.typeId)
             .append(this.typeClass)
+            .append(this.renderElementType)
 
         this.properties.forEach(builder::append)
 

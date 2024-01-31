@@ -10,6 +10,7 @@ import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
 import com.jetbrains.php.lang.PhpFileType
+import com.jetbrains.php.lang.lexer.PhpTokenTypes
 import com.jetbrains.php.lang.psi.PhpPsiUtil
 import com.jetbrains.php.lang.psi.elements.*
 import kotlinx.serialization.encodeToString
@@ -59,10 +60,17 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
             if (specialClasses.contains(phpClass.fqn) && docCommentText.contains(" * - #")) {
                 var properties = getAdditionalParametersFromDoc(docCommentText)
 
-                if (phpClass.fqn == "\\Drupal\\Core\\Render\\Element\\FormElement") {
+                val isFormElement = phpClass.fqn == "\\Drupal\\Core\\Render\\Element\\FormElement"
+                if (isFormElement) {
                     properties += arrayOf(RenderElementTypeProperty("name", type = "string"))
                 }
-                map[phpClass.fqn] = RenderElementType(phpClass.fqn, phpClass.fqn, properties)
+
+                val renderElementType = if (isFormElement) {
+                    "FormElement"
+                } else {
+                    "RenderElement"
+                }
+                map[phpClass.fqn] = RenderElementType(phpClass.fqn, phpClass.fqn, properties, renderElementType)
             } else {
                 processRenderElement(phpClass, map, docCommentText)
             }
@@ -77,19 +85,34 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
         docCommentString: String
     ) {
         val docComment = phpClass.docComment!!
-        val renderElement = docComment.getTagElementsByName("@RenderElement").firstOrNull()
-            ?: docComment.getTagElementsByName("@FormElement").firstOrNull()
-            ?: return
+        var renderElement = docComment.getTagElementsByName("@RenderElement").firstOrNull()
+        var type = "RenderElement"
+
+        if (renderElement == null) {
+           renderElement = docComment.getTagElementsByName("@FormElement").firstOrNull() ?: return
+            type = "FormElement"
+        }
 
         val getInfoMethod = phpClass.findOwnMethodByName("getInfo") ?: return
 
         var parameters = getInfoMethod
             .let { PsiTreeUtil.findChildOfType(it, PhpReturn::class.java)?.firstPsiChild }
-            .takeIf { it is Variable || it is ArrayCreationExpression }
+            .takeIf { it is Variable || it is ArrayCreationExpression || (it as? BinaryExpression)?.operationType == PhpTokenTypes.opPLUS }
             ?.let {
                 when (it) {
                     is Variable -> processVariables(getInfoMethod, it)
                     is ArrayCreationExpression -> processArrayCreationExpression(it)
+                    is BinaryExpression -> {
+                        var value = mutableListOf<RenderElementTypeProperty>()
+                        if (it.leftOperand is ArrayCreationExpression) {
+                            value = processArrayCreationExpression(it.leftOperand as ArrayCreationExpression).toMutableList()
+                        }
+
+                        if (it.rightOperand is ArrayCreationExpression) {
+                            value.addAll(processArrayCreationExpression(it.rightOperand as ArrayCreationExpression).toMutableList())
+                        }
+                        value.toTypedArray()
+                    }
                     else -> null
                 }
             } ?: return
@@ -100,7 +123,7 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
 
         val renderElementIdId = renderElement.text.substringAfter('"').substringBefore('"')
 
-        map[renderElementIdId] = RenderElementType(renderElementIdId, phpClass.fqn, parameters)
+        map[renderElementIdId] = RenderElementType(renderElementIdId, phpClass.fqn, parameters, type)
     }
 
     private fun processArrayCreationExpression(expression: ArrayCreationExpression): Array<RenderElementTypeProperty> {
@@ -169,7 +192,7 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 1
+    override fun getVersion(): Int = 2
 
     companion object {
         val KEY = ID.create<String, RenderElementType>("com.github.nvelychenko.drupalextend.index.render_element")

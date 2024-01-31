@@ -1,8 +1,8 @@
 package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
-import com.github.nvelychenko.drupalextend.index.types.DrupalFieldType
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
+import com.github.nvelychenko.drupalextend.index.types.DrupalFieldType
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.PsiTreeUtil

@@ -30,11 +30,6 @@
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.RenderElementIndex"/>
 
-        <!-- @todo Implemnt language injector -->
-<!--        <multiHostInjector implementation="com.github.nvelychenko.drupalextend.lang.RenderElementInjector"/>-->
-
-        <annotator language="PHP" implementationClass="com.github.nvelychenko.drupalextend.psi.RenderElementAnnotator"/>
-
         <psi.referenceContributor implementation="com.github.nvelychenko.drupalextend.reference.DrupalReferenceContributor"
                                   language="PHP"/>
 
@@ -55,5 +50,5 @@
     <depends>com.jetbrains.php.drupal</depends>
 
     <depends optional="true" config-file="symfony.xml">fr.adrienbrault.idea.symfony2plugin</depends>
-    <depends optional="true">de.espend.idea.php.annotation</depends>
+    <depends optional="true" config-file="annotation.xml">de.espend.idea.php.annotation</depends>
 </idea-plugin>

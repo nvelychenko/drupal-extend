@@ -68,10 +68,12 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
             val split = clearedExpression.split(splitKey)
             entityTypeId = split[0]
             methodName = split[1]
-        } else {
+        } else if (clearedExpression.contains(unclearKey)) {
             val result = unknownStorageProcess(clearedExpression, project) ?: return null
             entityTypeId = result.second
             methodName = result.first
+        } else {
+            return null
         }
 
         val fileBasedIndex = FileBasedIndex.getInstance()
