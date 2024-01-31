@@ -9,6 +9,7 @@ import com.github.nvelychenko.drupalextend.index.FieldTypeIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
 import com.github.nvelychenko.drupalextend.patterns.Patterns.LEAF_INSIDE_METHOD_PARAMETER
+import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_LITERAL_INSIDE_METHOD_PARAMETER
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
@@ -30,31 +31,13 @@ import com.jetbrains.php.lang.psi.elements.*
 
 class DrupalCompletionContributor : CompletionContributor() {
 
-    private class RenderElementTypeInsertionHandler : InsertHandler<LookupElement> {
-        override fun handleInsert(context: InsertionContext, item: LookupElement) {
-            val document = context.document
-            val editor = context.editor
-
-
-            val fileText: String = editor.document.text
-            if (fileText.isEmpty()) {
-                return
-            }
-
-            if (document.charsSequence[context.startOffset - 1] != '#') {
-                context.document.insertString(context.startOffset, "#")
-            }
-        }
-
-    }
-
     init {
         // \Drupal::entityTypeManager->getStorage('no|
-        extend(CompletionType.BASIC, LEAF_INSIDE_METHOD_PARAMETER, EntityStorageProvider())
+        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, EntityStorageProvider())
 
         // $node->set('fi
         // $node->get('fi|
-        extend(CompletionType.BASIC, LEAF_INSIDE_METHOD_PARAMETER, FieldCompletionProvider())
+        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, FieldCompletionProvider())
 
         // $render = [
         //    '#type' => '|
@@ -272,6 +255,23 @@ class DrupalCompletionContributor : CompletionContributor() {
                     }
                 }
             })
+    }
+
+    private class RenderElementTypeInsertionHandler : InsertHandler<LookupElement> {
+        override fun handleInsert(context: InsertionContext, item: LookupElement) {
+            val document = context.document
+            val editor = context.editor
+
+
+            val fileText: String = editor.document.text
+            if (fileText.isEmpty()) {
+                return
+            }
+
+            if (document.charsSequence[context.startOffset - 1] != '#') {
+                context.document.insertString(context.startOffset, "#")
+            }
+        }
     }
 
 }

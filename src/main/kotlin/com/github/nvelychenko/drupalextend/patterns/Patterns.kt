@@ -1,14 +1,19 @@
 package com.github.nvelychenko.drupalextend.patterns
 
+import com.intellij.patterns.PlatformPatterns
+import com.intellij.patterns.PlatformPatterns.or
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern.Capture
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.jetbrains.php.lang.PhpLanguage
+import com.jetbrains.php.lang.lexer.PhpTokenTypes
 import com.jetbrains.php.lang.parser.PhpElementTypes
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
 object Patterns {
+    private val phpLanguage by lazy { PhpLanguage.INSTANCE }
+
     /**
      * $method->get('blabla
      *                 ↑
@@ -22,7 +27,16 @@ object Patterns {
                             .withParent(psiElement(PhpElementTypes.METHOD_REFERENCE))
                     )
             )
-            .withLanguage(PhpLanguage.INSTANCE)
+            .withLanguage(phpLanguage)
+    }
+
+    val STRING_LITERAL_INSIDE_METHOD_PARAMETER by lazy {
+        or(
+            psiElement(PhpTokenTypes.STRING_LITERAL).withParent(STRING_INSIDE_METHOD_PARAMETER),
+            psiElement(PhpTokenTypes.chRSINGLE_QUOTE).withParent(STRING_INSIDE_METHOD_PARAMETER),
+            psiElement(PhpTokenTypes.chRDOUBLE_QUOTE).withParent(STRING_INSIDE_METHOD_PARAMETER),
+            psiElement(PhpTokenTypes.STRING_LITERAL_SINGLE_QUOTE).withParent(STRING_INSIDE_METHOD_PARAMETER)
+        )
     }
 
     /**
@@ -35,7 +49,7 @@ object Patterns {
                 psiElement(PhpElementTypes.PARAMETER_LIST)
                     .withParent(psiElement(PhpElementTypes.METHOD_REFERENCE))
             )
-            .withLanguage(PhpLanguage.INSTANCE)
+            .withLanguage(phpLanguage)
     }
 
     /**
@@ -50,7 +64,7 @@ object Patterns {
                         psiElement(StringLiteralExpression::class.java),
                     )
             )
-            .withLanguage(PhpLanguage.INSTANCE)
+            .withLanguage(phpLanguage)
     }
 
     /**
@@ -69,6 +83,7 @@ object Patterns {
                             )
                     )
             )
+            .withLanguage(phpLanguage)
     }
 
 }

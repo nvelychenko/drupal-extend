@@ -33,9 +33,7 @@ open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() 
         context: ProcessingContext,
         result: CompletionResultSet
     ) {
-        val element = (parameters.originalPosition ?: return).parent
-
-        if (element !is StringLiteralExpression) return
+        val element = (parameters.originalPosition ?: return).parent as StringLiteralExpression
 
         val parameterList = element.parent as ParameterList
 
