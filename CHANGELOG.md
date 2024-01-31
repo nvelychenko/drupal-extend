@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- Autocomplete for render elements and their properties.
+- Line marker for Render/Form element
+- Completion priority for direct properties.
+- Implemented ability to try to find entity from storage only knowing its interface/class.
+- Storage autocomplete in case Symfony is enabled, and storage is returned from service.
+
 ## [0.3.1] - 2024-01-31
 
 ### Added
