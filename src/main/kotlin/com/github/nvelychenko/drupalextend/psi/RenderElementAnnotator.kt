@@ -2,21 +2,15 @@ package com.github.nvelychenko.drupalextend.psi
 
 import com.github.nvelychenko.drupalextend.extensions.containsRenderElement
 import com.github.nvelychenko.drupalextend.extensions.getValue
-import com.github.nvelychenko.drupalextend.icon.DrupalIcons
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
 import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_IN_SIMPLE_ARRAY_VALUE
-import com.intellij.codeInsight.daemon.DefaultGutterIconNavigationHandler
-import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
-import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.FileBasedIndex
-import com.jetbrains.php.PhpClassHierarchyUtils
-import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.ArrayHashElement
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
@@ -36,7 +30,9 @@ class RenderElementAnnotator : Annotator {
         }
 
         val project = element.project
-        val renderElement = fileBasedIndex.getValue(RenderElementIndex.KEY, (hash.value as StringLiteralExpression).contents, project) ?: return
+        val renderElement =
+            fileBasedIndex.getValue(RenderElementIndex.KEY, (hash.value as StringLiteralExpression).contents, project)
+                ?: return
 
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
             .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.IDENTIFIER)
