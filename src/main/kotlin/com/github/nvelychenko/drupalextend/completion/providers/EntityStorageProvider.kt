@@ -21,8 +21,7 @@ class EntityStorageProvider : CompletionProvider<CompletionParameters>() {
         completionResultSet: CompletionResultSet
     ) {
         val leaf = completionParameters.originalPosition ?: return
-        val element = leaf.parent as? StringLiteralExpression
-        if (element == null || element.contents.isEmpty()) return
+        val element = leaf.parent as? StringLiteralExpression ?: return
 
         val parameterList = element.parent as ParameterList
         if (!parameterList.parameters.first().isEquivalentTo(element)) {
@@ -43,6 +42,7 @@ class EntityStorageProvider : CompletionProvider<CompletionParameters>() {
             "getFormObject",
             "getRouteProviders",
             "hasHandler",
+            "getHandler",
             // @todo getDefinition does not work
         )
 
