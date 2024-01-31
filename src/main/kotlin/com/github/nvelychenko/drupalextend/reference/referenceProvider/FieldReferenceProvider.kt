@@ -12,6 +12,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.lang.psi.elements.*
 
 class FieldReferenceProvider : PsiReferenceProvider() {
+
     /**
      * Finds $node->get('field_body')
      */

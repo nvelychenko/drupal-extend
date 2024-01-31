@@ -1,5 +1,6 @@
 package com.github.nvelychenko.drupalextend.reference.referenceProvider
 
+import com.github.nvelychenko.drupalextend.extensions.containsRenderElement
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
 import com.github.nvelychenko.drupalextend.reference.referenceType.RenderElementReference
@@ -21,15 +22,12 @@ class RenderElementTypeProvider : PsiReferenceProvider() {
 
         val hash = PsiTreeUtil.getParentOfType(element, ArrayHashElement::class.java) ?: return psiReferences
 
-        val key = hash.key as StringLiteralExpression
-        val value = hash.value as StringLiteralExpression
-
-        if (key.contents != "#type" || value.contents.isEmpty()) {
+        if (!hash.containsRenderElement()) {
             return psiReferences
         }
 
         val project = element.project
-        val renderElement = FileBasedIndex.getInstance().getValue(RenderElementIndex.KEY, value.contents, project)
+        val renderElement = FileBasedIndex.getInstance().getValue(RenderElementIndex.KEY, (hash.value as StringLiteralExpression).contents, project)
             ?: return psiReferences
 
         return arrayOf(RenderElementReference(element, renderElement))

@@ -12,6 +12,7 @@ import com.jetbrains.php.lang.psi.elements.MethodReference
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
 class EntityStorageReferenceProvider : PsiReferenceProvider() {
+
     /**
      * Finds \Drupal::entityTypeManager()->getStorage('ENTITY_TYPE') and adds reference to it
      */

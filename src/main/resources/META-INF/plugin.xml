@@ -33,6 +33,12 @@
         <psi.referenceContributor implementation="com.github.nvelychenko.drupalextend.reference.DrupalReferenceContributor"
                                   language="PHP"/>
 
+        <annotator language="PHP" implementationClass="com.github.nvelychenko.drupalextend.psi.RenderElementAnnotator"/>
+
+        <codeInsight.lineMarkerProvider
+                language="PHP"
+                implementationClass="com.github.nvelychenko.drupalextend.psi.RenderElementLineMarker"/>
+
         <completion.contributor order="first" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalCompletionContributor"/>
         <completion.contributor order="last" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.FieldMagicMethodCompletionContributor"/>
     </extensions>

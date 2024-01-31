@@ -4,7 +4,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.jetbrains.php.PhpClassHierarchyUtils
 import com.jetbrains.php.lang.PhpLangUtil
+import com.jetbrains.php.lang.psi.elements.ArrayHashElement
 import com.jetbrains.php.lang.psi.elements.PhpClass
+import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 import com.jetbrains.php.lang.psi.elements.Variable
 
 fun PsiElement.findVariablesByName(variableName: String): Array<Variable> {
@@ -42,4 +44,11 @@ fun PhpClass.isSuperInterfacesOf(interfaces: Array<PhpClass>): Boolean {
     }
 
     return isInstanceOf
+}
+
+fun ArrayHashElement.containsRenderElement(): Boolean {
+    val key = this.key as? StringLiteralExpression ?: return false
+    val value = this.value as? StringLiteralExpression ?: return false
+
+    return key.contents == "#type" && value.contents.isNotEmpty()
 }
