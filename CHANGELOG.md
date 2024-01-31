@@ -4,12 +4,14 @@
 
 ## [Unreleased]
 
+## [0.3.2] - 2024-01-31
+
 ### Added
 
 - Autocomplete for render elements and their properties.
 - Line marker for Render/Form element
 - Completion priority for direct properties.
-- Implemented ability to try to find entity from storage only knowing its interface/class.
+- Implemented the ability to try to find entity from storage only knowing its interface/class.
 - Storage autocomplete in case Symfony is enabled, and storage is returned from service.
 
 ## [0.3.1] - 2024-01-31
@@ -65,7 +67,8 @@ Added:
 - Content entity provider was not working in certain circumstances
 - Deprecated usage of baseDir
 
-[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.1.0...v0.2.0
