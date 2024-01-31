@@ -23,6 +23,10 @@ import com.jetbrains.php.lang.psi.resolve.types.PhpTypeProvider4
  */
 class EntityFromStorageTypeProvider : PhpTypeProvider4 {
 
+    private val fileBasedIndex: FileBasedIndex by lazy {
+        FileBasedIndex.getInstance()
+    }
+
     private val possibleMethods = mutableMapOf(
         Pair("load", ""),
         Pair("loadByProperties", "[]"),
@@ -75,8 +79,6 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
         } else {
             return null
         }
-
-        val fileBasedIndex = FileBasedIndex.getInstance()
 
         val contentEntity = fileBasedIndex.getValue(ContentEntityIndex.KEY, entityTypeId, project)
         if (contentEntity != null) {

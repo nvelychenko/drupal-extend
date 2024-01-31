@@ -29,14 +29,18 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
 
     private val entityTypeManagerInterface = "\\Drupal\\Core\\Entity\\EntityTypeManagerInterface"
 
+    private val fileBasedIndex: FileBasedIndex by lazy {
+        FileBasedIndex.getInstance()
+    }
+
     override fun getKey(): Char {
         return Util.KEY
     }
 
     override fun getType(methodReference: PsiElement): PhpType? {
-        if (
-            DumbService.getInstance(methodReference.project).isDumb
-            || !Patterns.METHOD_WITH_FIRST_STRING_PARAMETER.accepts(methodReference)
+        if (DumbService.getInstance(methodReference.project).isDumb || !Patterns.METHOD_WITH_FIRST_STRING_PARAMETER.accepts(
+                methodReference
+            )
         ) {
             return null
         }
@@ -65,8 +69,7 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
 
     private fun decompressString(compressedStr: String): String {
         val bytes = Base64.getDecoder().decode(compressedStr)
-        return GZIPInputStream(ByteArrayInputStream(bytes))
-            .bufferedReader(Charsets.UTF_8).use { it.readText() }
+        return GZIPInputStream(ByteArrayInputStream(bytes)).bufferedReader(Charsets.UTF_8).use { it.readText() }
     }
 
     override fun complete(expression: String?, project: Project?): PhpType? {
@@ -81,8 +84,7 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
 
         val (originalSignature, entityTypeId) = parts
 
-        val entityType =
-            FileBasedIndex.getInstance().getValue(ContentEntityIndex.KEY, entityTypeId, project) ?: return null
+        val entityType = fileBasedIndex.getValue(ContentEntityIndex.KEY, entityTypeId, project) ?: return null
 
         val phpIndex = PhpIndex.getInstance(project)
         val namedCollection = mutableListOf<PhpNamedElement>()
@@ -95,10 +97,11 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
         if (methods.isEmpty()) return null
 
         val entityTypeManagerInterface =
-            phpIndex.getInterfacesByFQN(entityTypeManagerInterface).takeIf { it.isNotEmpty() }?.first()
-                ?: return null
+            phpIndex.getInterfacesByFQN(entityTypeManagerInterface).takeIf { it.isNotEmpty() }?.first() ?: return null
 
-        val entityStorageClass = phpIndex.getClassesByFQN(entityType.storageHandler).takeIf { it.isNotEmpty() }?.first()
+        val entityStorageClass = phpIndex.getClassesByFQN(entityType.storageHandler)
+            .takeIf { it.isNotEmpty() }
+            ?.first()
             ?: return null
 
         val type = PhpType()
@@ -115,10 +118,7 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
     }
 
     override fun getBySignature(
-        expression: String,
-        visited: Set<String?>?,
-        depth: Int,
-        project: Project?
+        expression: String, visited: Set<String?>?, depth: Int, project: Project?
     ): Collection<PhpNamedElement>? {
         return null
     }

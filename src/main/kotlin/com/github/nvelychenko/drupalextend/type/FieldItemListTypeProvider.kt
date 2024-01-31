@@ -23,6 +23,10 @@ import org.apache.commons.lang3.StringUtils
  */
 class FieldItemListTypeProvider : PhpTypeProvider4 {
 
+    private val fileBasedIndex: FileBasedIndex by lazy {
+        FileBasedIndex.getInstance()
+    }
+
     private val endKey = '\u3339'
 
     override fun getKey(): Char {
@@ -80,8 +84,6 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
         val (entityTypeId, fieldName) = expression.replace("#$key", "").split(endKey)
 
         val allScope = GlobalSearchScope.allScope(project)
-
-        val fileBasedIndex = FileBasedIndex.getInstance()
 
         val entityTypeIndex = fileBasedIndex.getValues(ContentEntityIndex.KEY, entityTypeId, allScope)
 
