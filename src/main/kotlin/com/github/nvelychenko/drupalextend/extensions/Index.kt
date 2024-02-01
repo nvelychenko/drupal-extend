@@ -1,4 +1,4 @@
-package com.github.nvelychenko.drupalextend.util
+package com.github.nvelychenko.drupalextend.extensions
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -16,6 +16,9 @@ import com.intellij.util.indexing.ID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
+/**
+ * Excludes possible test directories, files from index.
+ */
 fun isValidForIndex(inputData: FileContent): Boolean {
     val fileName = inputData.psiFile.name
     if (fileName.startsWith(".") || fileName.endsWith("Test")) {
@@ -24,8 +27,6 @@ fun isValidForIndex(inputData: FileContent): Boolean {
 
     val projectDir = inputData.project.guessProjectDir() ?: return true
 
-    // possible fixture or test file
-    // to support also library paths, only filter them on project files
     val relativePath = VfsUtil.getRelativePath(inputData.file, projectDir, '/')
     return !(relativePath != null && (relativePath.contains("/Test/")
             || relativePath.contains("/Tests/") || relativePath.contains("/Fixture/")

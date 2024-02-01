@@ -7,7 +7,7 @@ import com.jetbrains.php.lang.PhpLangUtil
 import com.jetbrains.php.lang.psi.elements.PhpClass
 import com.jetbrains.php.lang.psi.elements.Variable
 
-fun PsiElement.findVariablesByName(variableName: String): List<Variable> {
+fun PsiElement.findVariablesByName(variableName: String): Array<Variable> {
     val variables = mutableListOf<Variable>()
     this.acceptChildren(object : PsiRecursiveElementVisitor() {
         override fun visitElement(element: PsiElement) {
@@ -22,11 +22,11 @@ fun PsiElement.findVariablesByName(variableName: String): List<Variable> {
         }
     })
     variables.reverse()
-    return variables
+    return variables.toTypedArray()
 }
 
 fun PhpClass.isSuperInterfaceOf(interfaze: PhpClass): Boolean {
-    return isSuperInterfacesOf(arrayOf(interfaze));
+    return isSuperInterfacesOf(arrayOf(interfaze))
 }
 
 fun PhpClass.isSuperInterfacesOf(interfaces: Array<PhpClass>): Boolean {

@@ -1,7 +1,8 @@
 package com.github.nvelychenko.drupalextend.index
 
+import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
 import com.github.nvelychenko.drupalextend.index.types.ContentEntity
-import com.github.nvelychenko.drupalextend.util.isValidForIndex
+import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
@@ -93,12 +94,6 @@ class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
         }
     }
 
-    private fun getPhpDocParameter(phpDocText: String, id: String): String? {
-        val entityTypeMatch = Regex("${id}(?:\"?)\\s*=\\s*\"([^\"]+)\"").find(phpDocText)
-
-        return entityTypeMatch?.groups?.get(1)?.value
-    }
-
     override fun getKeyDescriptor(): KeyDescriptor<String> = myKeyDescriptor
 
     override fun getValueExternalizer(): DataExternalizer<ContentEntity> = myDataExternalizer
@@ -109,7 +104,7 @@ class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 11
+    override fun getVersion(): Int = 12
 
     companion object {
         val KEY = ID.create<String, ContentEntity>("com.github.nvelychenko.drupalextend.index.content_entity_fqn")

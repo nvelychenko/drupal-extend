@@ -1,6 +1,5 @@
-package com.github.nvelychenko.drupalextend.util.yml
+package com.github.nvelychenko.drupalextend.extensions
 
-import com.github.nvelychenko.drupalextend.util.parents
 import org.jetbrains.yaml.psi.YAMLDocument
 import org.jetbrains.yaml.psi.YAMLKeyValue
 

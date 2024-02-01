@@ -9,22 +9,32 @@
 <h2>Features</h2>
 
 <ul>
-    <li>Autocomplete for Content Entity Storage (Config Storage WIP)</li>
-    <li>Fields autocomplete (for now config directory is hardcoded to the `config/sync`, project setting WIP)</li>
+    <li>Autocomplete for Content/Config Entity Storages</li>
+    <li>Fields autocomplete (for now config directory is hardcoded to the <b>config/sync</b>, project setting is WIP)</li>
+    <li>Fields property autocomplete e.g. <code>$node->get('author')->entity</code>. it will autocomplete <em>entity</em></li>
     <li>References for Storages and Fields (Ctrl + Click)</li>
-    <li>TypeProvider for EntityStorageInterface::load/loadMultiple/loadByProperties</li>
+    <li>Type provider for <code>load/loadMultiple/loadByProperties</code> storage methods e.g. <code>$node = $node_storage->load(1)</code> here it will know what is $node</li>
+    <li>Type provider for static methods e.g. <code>Node::load/loadMultiple/create</code></li>
+    <li>Type provider entity storages</li>
+    <li>Type provider for field item lists</li>
+    <li>Type provider for field items (WIP)</li>
 </ul>
 
 ]]></description>
 
     <extensions defaultExtensionNs="com.intellij">
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.FieldTypeIndex"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ConfigEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.FieldsIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.RenderElementIndex"/>
 
-        <psi.referenceContributor implementation="com.github.nvelychenko.drupalextend.reference.ContentEntity"
+        <psi.referenceContributor implementation="com.github.nvelychenko.drupalextend.reference.DrupalReferenceContributor"
                                   language="PHP"/>
+
+        <completion.contributor order="first" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalCompletionContributor"/>
+        <completion.contributor order="last" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.FieldMagicMethodCompletionContributor"/>
 
         <projectService serviceImplementation="com.github.nvelychenko.drupalextend.forms.Settings"/>
 
@@ -38,17 +48,16 @@
 
     <extensions defaultExtensionNs="com.jetbrains.php">
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider"/>
-        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.ContentEntityFieldTypeProvider"/>
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityFromStorageTypeProvider"/>
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.StaticContentEntityTypeProvider"/>
-        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.FieldPropertyTypeProvider"/>
-    </extensions>
-
-    <extensions defaultExtensionNs="com.intellij">
-        <completion.contributor language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalContentEntityContributor"/>
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.FieldItemListTypeProvider"/>
     </extensions>
 
     <depends>com.jetbrains.php</depends>
     <depends>com.intellij.modules.platform</depends>
     <depends>org.jetbrains.plugins.yaml</depends>
     <depends>com.jetbrains.php.drupal</depends>
+
+    <depends optional="true" config-file="symfony.xml">fr.adrienbrault.idea.symfony2plugin</depends>
+    <depends optional="true" config-file="annotation.xml">de.espend.idea.php.annotation</depends>
 </idea-plugin>

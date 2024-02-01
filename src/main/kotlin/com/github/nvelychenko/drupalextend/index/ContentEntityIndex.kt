@@ -1,10 +1,16 @@
 package com.github.nvelychenko.drupalextend.index
 
+import com.github.nvelychenko.drupalextend.extensions.getModificationTrackerForIndexId
+import com.github.nvelychenko.drupalextend.extensions.getValue
+import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
 import com.github.nvelychenko.drupalextend.forms.Settings
 import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
-import com.github.nvelychenko.drupalextend.util.isValidForIndex
+import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
@@ -137,19 +143,13 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
 
         // @todo Implement better parsing for phpdoc.
         for (key in hardcodedKeys) {
-            resolvedKeys[key] = (getPhpDocParameter(contentEntityTypeDocText, key) ?: continue)
+            resolvedKeys[key] = (getPhpDocParameter(contentEntityTypeDocText, "\"${key}\"") ?: continue)
         }
 
-        val sqlStorageHandler = getPhpDocParameter(contentEntityTypeDocText, "storage") ?: "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage"
+        val sqlStorageHandler = getPhpDocParameter(contentEntityTypeDocText, "\"storage\"")
+            ?: "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage"
 
         map[id] = DrupalContentEntity(id, phpClass.fqn, resolvedKeys, sqlStorageHandler)
-    }
-
-    private fun getPhpDocParameter(phpDocText: String, id: String): String? {
-        @Suppress("RegExpUnnecessaryNonCapturingGroup")
-        val entityTypeMatch = Regex("${id}(?:\"?)\\s*=\\s*\"([^\"]+)\"").find(phpDocText)
-
-        return entityTypeMatch?.groups?.get(1)?.value
     }
 
     override fun getKeyDescriptor(): KeyDescriptor<String> = myKeyDescriptor
@@ -162,10 +162,28 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 11
+    override fun getVersion(): Int = 12
 
     companion object {
         val KEY = ID.create<String, DrupalContentEntity>("com.github.nvelychenko.drupalextend.index.content_types")
+
+        private val index by lazy { FileBasedIndex.getInstance() }
+
+        @Synchronized
+        fun getAllHandlers(project: Project): HashMap<String, DrupalContentEntity> {
+            return CachedValuesManager.getManager(project).getCachedValue(project) {
+                val results = hashMapOf<String, DrupalContentEntity>()
+
+                index.getAllKeys(KEY, project).forEach {
+                    index.getValue(KEY, it, project)?.let { contentEntity ->
+                        results[contentEntity.storageHandler] = contentEntity
+                    }
+                }
+
+                CachedValueProvider.Result.create(results, getModificationTrackerForIndexId(project, KEY, index))
+            }
+        }
+
     }
 
 }
