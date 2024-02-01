@@ -4,17 +4,14 @@ import com.github.nvelychenko.drupalextend.extensions.containsRenderElement
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.icon.DrupalIcons.HASH_ICON
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
-import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_IN_SIMPLE_ARRAY_VALUE
+import com.github.nvelychenko.drupalextend.patterns.Patterns.LEAF_STRING_IN_SIMPLE_ARRAY_VALUE
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
-import com.intellij.patterns.PlatformPatterns.or
-import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.PhpIndex
-import com.jetbrains.php.lang.lexer.PhpTokenTypes
 import com.jetbrains.php.lang.psi.elements.ArrayHashElement
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 import javax.swing.Icon
@@ -32,14 +29,17 @@ class RenderElementLineMarker : RelatedItemLineMarkerProvider() {
         return "Render element type"
     }
 
+    /**
+     * This thing is lagging sometimes, hence disabling it by default.
+     */
+    override fun isEnabledByDefault(): Boolean {
+        return false
+    }
+
     override fun collectNavigationMarkers(
         element: PsiElement, result: MutableCollection<in RelatedItemLineMarkerInfo<*>>
     ) {
-        if (!or(
-                psiElement(PhpTokenTypes.STRING_LITERAL).withParent(STRING_IN_SIMPLE_ARRAY_VALUE),
-                psiElement(PhpTokenTypes.STRING_LITERAL_SINGLE_QUOTE).withParent(STRING_IN_SIMPLE_ARRAY_VALUE)
-            ).accepts(element)
-        ) {
+        if (!LEAF_STRING_IN_SIMPLE_ARRAY_VALUE.accepts(element)) {
             return
         }
 
@@ -51,7 +51,9 @@ class RenderElementLineMarker : RelatedItemLineMarkerProvider() {
 
         val project = element.project
 
-        val renderElement = fileBasedIndex.getValue(RenderElementIndex.KEY, (hash.value as StringLiteralExpression).contents, project) ?: return
+        val renderElement =
+            fileBasedIndex.getValue(RenderElementIndex.KEY, (hash.value as StringLiteralExpression).contents, project)
+                ?: return
 
         val renderElementClass =
             PhpIndex.getInstance(project).getClassesByFQN(renderElement.typeClass).firstOrNull() ?: return

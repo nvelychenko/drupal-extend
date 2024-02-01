@@ -16,9 +16,6 @@ import com.intellij.util.indexing.ID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-/**
- * Excludes possible test directories, files from index.
- */
 fun isValidForIndex(inputData: FileContent): Boolean {
     val fileName = inputData.psiFile.name
     if (fileName.startsWith(".") || fileName.endsWith("Test")) {

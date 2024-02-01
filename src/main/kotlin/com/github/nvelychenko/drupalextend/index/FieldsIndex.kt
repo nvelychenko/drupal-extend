@@ -111,7 +111,6 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
 
         baseFieldDefinitionMethod
             .let { PsiTreeUtil.findChildOfType(it, PhpReturn::class.java)?.firstPsiChild }
-            // We are only interested in
             // 1. return $fields
             // 2. return ['field' => BaseFieldDefinition::create('entity_reference')
             .takeIf { it is Variable || it is ArrayCreationExpression }
@@ -127,7 +126,7 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
     }
 
     /**
-     * @code
+     * @sample
      *
      * return [
      *   'field' => ...
@@ -155,7 +154,7 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
     }
 
     /**
-     * @code
+     * @sample
      *
      * $variable['field'] = ..
      * $variable['field2'] = ..
@@ -190,9 +189,7 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
     }
 
     /**
-     * Gets base field type.
-     *
-     * @code
+     * @sample
      * $entity_type->getKey('owner') => BaseFieldDefinition::create('entity_reference')
      *   ->setLabel(new TranslatableMarkup('User ID'))
      *   ...
@@ -217,7 +214,7 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
                     ?.takeIf { it.contents.isNotEmpty() }
                     ?.let {
                         val contents = it.contents.replace("'", "")
-                        "KEY|$contents"
+                        "$GENERAL_BASE_FIELD_KEY_PREFIX$contents"
                     }
             }
 
@@ -226,9 +223,7 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
     }
 
     /**
-     * Gets base field type.
-     *
-     * @code
+     * @sample
      * $entity_type->getKey('owner') => BaseFieldDefinition::create('entity_reference')
      *   ->setLabel(new TranslatableMarkup('User ID'))
      *   ...
@@ -296,6 +291,8 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
 
     companion object {
         val KEY = ID.create<String, DrupalField>("com.github.nvelychenko.drupalextend.index.fields")
+
+        val GENERAL_BASE_FIELD_KEY_PREFIX = "KEY|"
     }
 
     private data class FieldRepresentation(val key: String, val value: String, val path: String?)

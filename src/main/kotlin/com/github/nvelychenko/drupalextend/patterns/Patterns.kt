@@ -1,6 +1,5 @@
 package com.github.nvelychenko.drupalextend.patterns
 
-import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PlatformPatterns.or
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern.Capture
@@ -18,6 +17,7 @@ object Patterns {
      * $method->get('blabla
      *                 ↑
      */
+    @Suppress("unused")
     val LEAF_INSIDE_METHOD_PARAMETER: Capture<LeafPsiElement> by lazy {
         psiElement(LeafPsiElement::class.java)
             .withParent(
@@ -84,6 +84,48 @@ object Patterns {
                     )
             )
             .withLanguage(phpLanguage)
+    }
+
+    val LEAF_STRING_IN_SIMPLE_ARRAY_VALUE by lazy {
+        or(
+            psiElement(PhpTokenTypes.STRING_LITERAL).withParent(STRING_IN_SIMPLE_ARRAY_VALUE).withLanguage(phpLanguage),
+            psiElement(PhpTokenTypes.STRING_LITERAL_SINGLE_QUOTE).withParent(STRING_IN_SIMPLE_ARRAY_VALUE).withLanguage(phpLanguage)
+        )
+    }
+
+    /**
+     * ['value']
+     *     ↑
+     *
+     * or
+     *
+     * ['key' => 'value']
+     *    ↑
+     * or
+     * [
+     *   ['key' => 'value']
+     *      ↑
+     * ]
+     */
+    val STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE: Capture<LeafPsiElement> by lazy {
+        psiElement(LeafPsiElement::class.java)
+            .withParent(
+                psiElement(StringLiteralExpression::class.java)
+                    .withParent(
+                        or(
+                            psiElement(PhpElementTypes.ARRAY_KEY)
+                                .withParent(
+                                    or(
+                                        psiElement(PhpElementTypes.HASH_ARRAY_ELEMENT)
+                                            .withParent(psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)),
+                                        psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)
+                                    )
+                                ),
+                            psiElement(PhpElementTypes.ARRAY_VALUE)
+                                .withParent(psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION))
+                        )
+                    )
+            )
     }
 
 }
