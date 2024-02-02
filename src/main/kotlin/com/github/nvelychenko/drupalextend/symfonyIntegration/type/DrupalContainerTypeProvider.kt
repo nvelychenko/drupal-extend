@@ -1,5 +1,6 @@
 package com.github.nvelychenko.drupalextend.symfonyIntegration.type
 
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.psi.PsiElement
 import com.jetbrains.php.lang.psi.elements.MethodReference
 import com.jetbrains.php.lang.psi.resolve.types.PhpType
@@ -20,16 +21,16 @@ class DrupalContainerTypeProvider : SymfonyContainerTypeProvider() {
         return '\u9955'
     }
 
-    override fun getType(e: PsiElement): PhpType? {
-        if (!Symfony2ProjectComponent.isEnabled(e.project)) {
+    override fun getType(psiElement: PsiElement): PhpType? {
+        if (!Symfony2ProjectComponent.isEnabled(psiElement.project) || !psiElement.project.drupalExtendSettings.isEnabled) {
             return null
         }
 
-        if (e !is MethodReference || !PhpElementsUtil.isMethodWithFirstStringOrFieldReference(e, "service")) {
+        if (psiElement !is MethodReference || !PhpElementsUtil.isMethodWithFirstStringOrFieldReference(psiElement, "service")) {
             return null
         }
 
-        val signature = PhpTypeProviderUtil.getReferenceSignatureByFirstParameter(e, trimKey)
+        val signature = PhpTypeProviderUtil.getReferenceSignatureByFirstParameter(psiElement, trimKey)
         return if (signature == null) null else PhpType().add("#" + this.key + signature)
     }
 }

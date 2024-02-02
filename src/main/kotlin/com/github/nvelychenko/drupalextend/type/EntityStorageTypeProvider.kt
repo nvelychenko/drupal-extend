@@ -4,6 +4,7 @@ import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.patterns.Patterns
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider.Util.SPLITER_KEY
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -38,9 +39,11 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
     }
 
     override fun getType(methodReference: PsiElement): PhpType? {
-        if (DumbService.getInstance(methodReference.project).isDumb || !Patterns.METHOD_WITH_FIRST_STRING_PARAMETER.accepts(
-                methodReference
-            )
+        val project = methodReference.project
+        if (
+            !project.drupalExtendSettings.isEnabled
+            || DumbService.getInstance(project).isDumb
+            || !Patterns.METHOD_WITH_FIRST_STRING_PARAMETER.accepts(methodReference)
         ) {
             return null
         }

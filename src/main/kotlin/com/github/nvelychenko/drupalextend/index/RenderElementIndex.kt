@@ -4,6 +4,7 @@ import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
 import com.github.nvelychenko.drupalextend.index.types.RenderElementType
 import com.github.nvelychenko.drupalextend.index.types.RenderElementType.RenderElementTypeProperty
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
@@ -39,9 +40,12 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
     override fun getIndexer(): DataIndexer<String, RenderElementType, FileContent> {
         return DataIndexer { inputData ->
             val map = hashMapOf<String, RenderElementType>()
+
+            if (!inputData.project.drupalExtendSettings.isEnabled) return@DataIndexer map
+
             val psiFile = inputData.psiFile
 
-            if (!isValidForIndex(inputData)) {
+            if (!inputData.isValidForIndex()) {
                 return@DataIndexer map
             }
 

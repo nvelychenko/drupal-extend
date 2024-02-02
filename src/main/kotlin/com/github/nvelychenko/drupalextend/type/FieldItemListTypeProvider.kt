@@ -3,6 +3,7 @@ package com.github.nvelychenko.drupalextend.type
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.index.FieldTypeIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -34,7 +35,11 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
     }
 
     override fun getType(psiElement: PsiElement): PhpType? {
-        if (DumbService.getInstance(psiElement.project).isDumb) {
+        val project = psiElement.project
+        if (
+            !project.drupalExtendSettings.isEnabled
+            || DumbService.getInstance(project).isDumb
+        ) {
             return null
         }
 

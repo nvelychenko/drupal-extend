@@ -8,6 +8,7 @@ import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex.Companion.GENERAL_BASE_FIELD_KEY_PREFIX
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -35,6 +36,8 @@ open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() 
         result: CompletionResultSet
     ) {
         val element = (parameters.originalPosition ?: return).parent as StringLiteralExpression
+
+        if (!element.project.drupalExtendSettings.isEnabled) return
 
         val parameterList = element.parent as ParameterList
 

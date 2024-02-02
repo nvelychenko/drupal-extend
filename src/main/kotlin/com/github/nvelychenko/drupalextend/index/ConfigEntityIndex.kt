@@ -1,6 +1,7 @@
 package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
@@ -24,7 +25,9 @@ class ConfigEntityIndex : FileBasedIndexExtension<String, String>() {
             val map = hashMapOf<String, String>()
             val psiFile = inputData.psiFile
 
-            if (!isValidForIndex(inputData)) {
+            if (!inputData.project.drupalExtendSettings.isEnabled) return@DataIndexer map
+
+            if (!inputData.isValidForIndex()) {
                 return@DataIndexer map
             }
 

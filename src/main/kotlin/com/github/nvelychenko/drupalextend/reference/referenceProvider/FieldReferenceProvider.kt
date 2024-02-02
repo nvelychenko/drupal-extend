@@ -3,6 +3,7 @@ package com.github.nvelychenko.drupalextend.reference.referenceProvider
 import com.github.nvelychenko.drupalextend.extensions.getAllProjectKeys
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.reference.referenceType.FieldPropertyReference
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -17,6 +18,9 @@ class FieldReferenceProvider : PsiReferenceProvider() {
      * Finds $node->get('field_body')
      */
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
+        val project = element.project
+        if (!project.drupalExtendSettings.isEnabled) return emptyArray()
+
         val psiReferences = PsiReference.EMPTY_ARRAY
 
         element as StringLiteralExpression
@@ -31,7 +35,6 @@ class FieldReferenceProvider : PsiReferenceProvider() {
             else -> null
         } ?: return psiReferences
 
-        val project = element.project
         val types = reference.globalType.filterPrimitives().types
 
         val index = FileBasedIndex.getInstance()

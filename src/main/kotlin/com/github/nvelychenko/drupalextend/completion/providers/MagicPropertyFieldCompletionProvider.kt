@@ -1,5 +1,6 @@
 package com.github.nvelychenko.drupalextend.completion.providers
 
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.util.ProcessingContext
@@ -25,6 +26,9 @@ class MagicPropertyFieldCompletionProvider : FieldCompletionProvider() {
         result: CompletionResultSet
     ) {
         val originalPosition = parameters.originalPosition ?: return
+
+        if (!originalPosition.project.drupalExtendSettings.isEnabled) return
+
         val prevSibling = parameters.position.prevSibling
 
         val memberReference = if (prevSibling != null && prevSibling.node.elementType === PhpTokenTypes.ARROW) {

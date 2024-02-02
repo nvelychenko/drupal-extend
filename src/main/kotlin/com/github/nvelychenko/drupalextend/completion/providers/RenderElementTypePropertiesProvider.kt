@@ -2,6 +2,7 @@ package com.github.nvelychenko.drupalextend.completion.providers
 
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -23,6 +24,9 @@ class RenderElementTypePropertiesProvider : CompletionProvider<CompletionParamet
         completionResultSet: CompletionResultSet
     ) {
         val leaf = completionParameters.originalPosition ?: return
+        val project = leaf.project
+
+        if (!project.drupalExtendSettings.isEnabled) return
 
         val array = PsiTreeUtil.getParentOfType(leaf, ArrayCreationExpression::class.java)!!
 
@@ -33,8 +37,6 @@ class RenderElementTypePropertiesProvider : CompletionProvider<CompletionParamet
 
         val type =
             (typeElement.value as StringLiteralExpression).contents.takeIf { it.isNotEmpty() } ?: return
-
-        val project = array.project
 
         val renderElementType = fileBasedIndex.getValue(RenderElementIndex.KEY, type, project) ?: return
 

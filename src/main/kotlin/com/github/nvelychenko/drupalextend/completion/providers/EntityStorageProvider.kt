@@ -5,6 +5,7 @@ import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.index.ConfigEntityIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -21,6 +22,10 @@ class EntityStorageProvider : CompletionProvider<CompletionParameters>() {
         completionResultSet: CompletionResultSet
     ) {
         val leaf = completionParameters.originalPosition ?: return
+        val project = leaf.project
+
+        if (!project.drupalExtendSettings.isEnabled) return
+
         val element = leaf.parent as? StringLiteralExpression ?: return
 
         val parameterList = element.parent as ParameterList
@@ -59,8 +64,6 @@ class EntityStorageProvider : CompletionProvider<CompletionParameters>() {
             val methodClass = method.containingClass as PhpClass
 
             if (methodClass.isInterface) continue
-
-            val project = method.project
 
             val entityReferences =
                 PhpIndex.getInstance(project)

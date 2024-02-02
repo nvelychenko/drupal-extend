@@ -3,6 +3,7 @@ package com.github.nvelychenko.drupalextend.reference.referenceProvider
 import com.github.nvelychenko.drupalextend.extensions.containsRenderElement
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.reference.referenceType.RenderElementReference
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -18,6 +19,9 @@ class RenderElementTypeProvider : PsiReferenceProvider() {
      * Find ['#type' => 'container']
      */
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
+        val project = element.project
+        if (!project.drupalExtendSettings.isEnabled) return emptyArray()
+
         val psiReferences = PsiReference.EMPTY_ARRAY
 
         val hash = PsiTreeUtil.getParentOfType(element, ArrayHashElement::class.java) ?: return psiReferences
@@ -26,7 +30,6 @@ class RenderElementTypeProvider : PsiReferenceProvider() {
             return psiReferences
         }
 
-        val project = element.project
         val renderElement = FileBasedIndex.getInstance().getValue(RenderElementIndex.KEY, (hash.value as StringLiteralExpression).contents, project)
             ?: return psiReferences
 
