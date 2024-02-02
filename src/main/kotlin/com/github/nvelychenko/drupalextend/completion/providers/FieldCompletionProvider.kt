@@ -7,6 +7,7 @@ import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
+import com.github.nvelychenko.drupalextend.index.FieldsIndex.Companion.GENERAL_BASE_FIELD_KEY_PREFIX
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -33,9 +34,7 @@ open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() 
         context: ProcessingContext,
         result: CompletionResultSet
     ) {
-        val element = (parameters.originalPosition ?: return).parent
-
-        if (element !is StringLiteralExpression) return
+        val element = (parameters.originalPosition ?: return).parent as StringLiteralExpression
 
         val parameterList = element.parent as ParameterList
 
@@ -80,10 +79,7 @@ open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() 
         val entityTypeId = contentEntity.entityTypeId
         val keys = index.getValue(ContentEntityIndex.KEY, entityTypeId, project)?.keys?.toMutableMap() ?: return
 
-        // Basic field definition usually are preset in subclasses here we
-        // process all supers (traits, classes) to find if there is additional
-        // field to autocomplete.
-        // @see com.github.nvelychenko.drupalextend.data.ExtendableContentEntityRelatedClasses.allPossibleExtendableContentEntityClasses
+        // General fields definitions are usually preset in subclasses.
         val additionalClasses = mutableListOf<String>()
         PhpIndex.getInstance(project).getClassesByFQN(contentEntity.fqn)
             .firstOrNull()
@@ -111,8 +107,8 @@ open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() 
                 when {
                     // For cases when field key is
                     // $entity_type->getKey('owner') => BaseFieldDefinition::create('entity_reference')
-                    // we use special prefix KEY| that later is replaced by actual key from annotations.
-                    name.contains("KEY|") -> keys[name.substringAfter("|")]
+                    // we use special prefix that later is replaced by actual key from annotations.
+                    name.contains(GENERAL_BASE_FIELD_KEY_PREFIX) -> keys[name.substringAfter("|")]
                     else -> name
                 }?.let { fieldName ->
                     result.addElement(

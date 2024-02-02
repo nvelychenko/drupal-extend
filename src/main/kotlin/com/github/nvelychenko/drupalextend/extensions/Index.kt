@@ -18,9 +18,6 @@ import com.intellij.util.indexing.ID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-/**
- * Excludes possible test directories, files from index.
- */
 fun FileContent.isValidForIndex(): Boolean {
     val fileName = psiFile.name
     if (fileName.startsWith(".") || fileName.endsWith("Test")) {
@@ -101,7 +98,7 @@ fun <K : Any, V> FileBasedIndex.getAllValuesWithKeyPrefix(
         getKey("${id.name}${prefix}"),
         {
             val result = getAllKeys(id, project)
-                .filter { it is String && it.contains(prefix) }
+                .filter { it is String && it.startsWith(prefix) }
                 .mapNotNull {
                     getValues(id, it, GlobalSearchScope.allScope(project)).firstOrNull()
                 }

@@ -18,6 +18,10 @@ import com.jetbrains.php.lang.psi.resolve.types.PhpTypeProvider4
  */
 class StaticContentEntityTypeProvider : PhpTypeProvider4 {
 
+    private val fileBasedIndex: FileBasedIndex by lazy {
+        FileBasedIndex.getInstance()
+    }
+
     override fun getKey(): Char {
         return '\u0434'
     }
@@ -47,8 +51,6 @@ class StaticContentEntityTypeProvider : PhpTypeProvider4 {
             return null
 
         val (signature, methodName) = expression.substring(2).split(splitKey)
-
-        val fileBasedIndex = FileBasedIndex.getInstance()
 
         for (partialSignature in signature.split("|")) {
             if (partialSignature.startsWith("#M#C")) {
