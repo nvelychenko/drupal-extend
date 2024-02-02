@@ -9,7 +9,7 @@ The plugin is enhancement for your Drupal development experience.
 ## Features
 * Autocomplete for Content/Config Entities Storage (eck support)
 
-* Fields autocomplete (for now config directory is hardcoded to the `config/sync`, project setting is WIP)
+* Fields autocomplete (default configuration directory points to the `config/sync` directory, you can change it inside plugin settings. <kbd>Settings</kbd> -> <kbd>PHP</kbd> -> <kbd>Drupal Extend</kbd>)
 
 * Field properties autocomplete e.g. `$node->get('field_user')->en|` it will autocomplete **entity** in this case.
 
@@ -29,7 +29,11 @@ The plugin is enhancement for your Drupal development experience.
 
 * Autocomplete for Render Element and its properties e.g. `#type' => 'checkbox', '#tit|`
 
-* etc.
+* Render element type highlight (Annotator)
+
+* (Optional) Line marker for render elements. It is disabled by default to enable it go to <kbd>Settings</kbd> -> <kbd>Editor</kbd> -> <kbd>Gutter Icons</kbd> -> <kbd>Render Element Type</kbd>
+
+![Render Element line marker example](./assets/line_marker_example.png)
 
 ## Installation
 
