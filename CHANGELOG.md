@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2024-02-02
+
+### Added
+
+- Plugin settings 🎉 (ability to choose configuration directory, disabled plugin, clear index) 
+- Annotator for render element type (highlighting) 
+- (optional) Line marker for render element type
+
+### Fixed
+
+- Completion for storage didn't work on an empty string.
+- in rare cases fields where autocomplete from another entity with the same ID prefix.
+- Bug with \Drupal::service
+
 ## [0.3.2] - 2024-01-31
 
 ### Added
@@ -67,7 +81,8 @@ Added:
 - Content entity provider was not working in certain circumstances
 - Deprecated usage of baseDir
 
-[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.2.0...v0.3.0
