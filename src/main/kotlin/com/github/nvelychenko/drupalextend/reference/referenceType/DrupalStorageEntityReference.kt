@@ -3,6 +3,7 @@ package com.github.nvelychenko.drupalextend.reference.referenceType
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.ConfigEntityIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiPolyVariantReferenceBase
@@ -16,6 +17,8 @@ class DrupalStorageEntityReference(element: PsiElement, private val entityTypeId
     private val project = element.project
 
     override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
+        if (!project.drupalExtendSettings.isEnabled) return emptyArray()
+
         val fileBasedIndex = FileBasedIndex.getInstance()
         val phpIndex = PhpIndex.getInstance(project)
 

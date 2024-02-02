@@ -1,16 +1,15 @@
 package com.github.nvelychenko.drupalextend.util
 
-import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
-import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
-import com.github.nvelychenko.drupalextend.index.FieldTypeIndex
-import com.github.nvelychenko.drupalextend.index.FieldsIndex
+import com.github.nvelychenko.drupalextend.index.*
 import com.intellij.util.indexing.FileBasedIndex
 
 fun clearPluginIndexes() {
     arrayOf(
-        ContentEntityFqnIndex.KEY,
+        ConfigEntityIndex.KEY,
         ContentEntityIndex.KEY,
+        ContentEntityFqnIndex.KEY,
         FieldsIndex.KEY,
         FieldTypeIndex.KEY,
+        RenderElementIndex.KEY,
     ).forEach { FileBasedIndex.getInstance().requestRebuild(it) }
 }

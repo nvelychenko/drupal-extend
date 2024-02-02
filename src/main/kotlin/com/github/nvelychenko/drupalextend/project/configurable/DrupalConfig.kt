@@ -21,6 +21,7 @@ class DrupalConfig(
             row {
                 isEnabledCheckbox = checkBox(DrupalExtendBundle.message("settings.drupal_extend.is_enabled"))
                     .bindSelected(settings::isEnabled)
+                    .onApply { clearPluginIndexes() }
             }
 
             row {
@@ -36,6 +37,7 @@ class DrupalConfig(
                     })
                     .enabledIf(isEnabledCheckbox.selected)
                     .comment(DrupalExtendBundle.message("settings.drupal_extend.config_directory.title"))
+                    .resizableColumn()
                     .align(Align.FILL)
                     .bindText(settings::configDirectory)
                     .onApply {

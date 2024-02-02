@@ -2,6 +2,7 @@ package com.github.nvelychenko.drupalextend.reference.referenceType
 
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
 import com.github.nvelychenko.drupalextend.index.types.DrupalField
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.yml.YAMLKeyValueFinder
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.openapi.vfs.VirtualFile
@@ -31,7 +32,12 @@ class FieldPropertyReference(element: PsiElement, val entityTypeId: String, priv
         PhpFileType.INSTANCE
     )
 
-    override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> = HashMap<VirtualFile, String>().apply {
+    override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
+        if (!project.drupalExtendSettings.isEnabled) return emptyArray()
+        return multiResolve()
+    }
+
+    fun multiResolve(): Array<ResolveResult> = HashMap<VirtualFile, String>().apply {
         val processor = FileBasedIndex.ValueProcessor<DrupalField> { file, value -> put(file, value.path); true }
         FileBasedIndex.getInstance()
             .processValues(FieldsIndex.KEY, "${entityTypeId}|${fieldName}", null, processor, scope)
