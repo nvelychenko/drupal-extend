@@ -1,7 +1,8 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
-<idea-plugin>
+<idea-plugin require-restart="false">
+    <resource-bundle>messages.DrupalExtendBundle</resource-bundle>
     <id>com.github.nvelychenko.drupalextend</id>
-    <name>Drupal extend</name>
+    <name>Drupal Extend</name>
     <vendor>nvelychenko</vendor>
     <description><![CDATA[
 <h1>Extends Drupal integration with PHPStorm.</h1>
@@ -36,12 +37,11 @@
         <completion.contributor order="first" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalCompletionContributor"/>
         <completion.contributor order="last" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.FieldMagicMethodCompletionContributor"/>
 
-        <projectService serviceImplementation="com.github.nvelychenko.drupalextend.forms.Settings"/>
-
         <projectConfigurable
-                instance="com.github.nvelychenko.drupalextend.forms.SettingsForm"
+                instance="com.github.nvelychenko.drupalextend.project.configurable.DrupalConfig"
                 displayName="Drupal Extend"
-                id="DrupalExtend.SettingsForm"
+                id="com.github.nvelychenko.drupalextend.settings"
+                bundle="messages.DrupalExtendBundle"
                 parentId="reference.webide.settings.project.settings.php"
                 nonDefaultProject="true"/>
     </extensions>

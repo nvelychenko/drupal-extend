@@ -24,7 +24,7 @@ class ConfigEntityIndex : FileBasedIndexExtension<String, String>() {
             val map = hashMapOf<String, String>()
             val psiFile = inputData.psiFile
 
-            if (!isValidForIndex(inputData)) {
+            if (!inputData.isValidForIndex()) {
                 return@DataIndexer map
             }
 

@@ -2,13 +2,11 @@ package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.data.ExtendableContentEntityRelatedClasses
 import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
+import com.github.nvelychenko.drupalextend.extensions.isInConfigurationDirectory
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
 import com.github.nvelychenko.drupalextend.extensions.keyPath
-import com.github.nvelychenko.drupalextend.forms.Settings
 import com.github.nvelychenko.drupalextend.index.types.DrupalField
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
-import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
@@ -54,26 +52,17 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
             val map = hashMapOf<String, DrupalField>()
             val psiFile = inputData.psiFile
 
-            if (!isValidForIndex(inputData)) {
+            if (!inputData.isValidForIndex()) {
                 return@DataIndexer map
             }
 
-            // @todo Improve directory handing
-            if (psiFile is YAMLFile) {
-                val baseDir = inputData.project.guessProjectDir()
-                val configDir = Settings.getInstance(inputData.project).configDir
-
-                if (baseDir != null) {
-                    val relativePath =
-                        VfsUtil.getRelativePath(inputData.file, baseDir, '/') ?: return@DataIndexer map
-                    if (!relativePath.contains(configDir)) {
-                        return@DataIndexer map
+            when (psiFile) {
+                is YAMLFile -> {
+                    if (inputData.isInConfigurationDirectory()) {
+                        processYml(map, psiFile)
                     }
                 }
-            }
 
-            when (psiFile) {
-                is YAMLFile -> processYml(map, psiFile)
                 is PhpFile -> processPhp(map, psiFile)
             }
 

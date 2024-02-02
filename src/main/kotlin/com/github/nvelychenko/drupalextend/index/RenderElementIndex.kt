@@ -41,7 +41,7 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
             val map = hashMapOf<String, RenderElementType>()
             val psiFile = inputData.psiFile
 
-            if (!isValidForIndex(inputData)) {
+            if (!inputData.isValidForIndex()) {
                 return@DataIndexer map
             }
 

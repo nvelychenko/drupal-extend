@@ -58,7 +58,7 @@ class FieldTypeIndex : FileBasedIndexExtension<String, DrupalFieldType>() {
             val map = hashMapOf<String, DrupalFieldType>()
             val phpFile = inputData.psiFile as PhpFile
 
-            if (!isValidForIndex(inputData)) return@DataIndexer map
+            if (!inputData.isValidForIndex()) return@DataIndexer map
 
             val phpClass = PsiTreeUtil.findChildOfType(phpFile, PhpClass::class.java) ?: return@DataIndexer map
 

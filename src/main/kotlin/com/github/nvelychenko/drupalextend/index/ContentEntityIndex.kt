@@ -2,13 +2,11 @@ package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.extensions.getModificationTrackerForIndexId
 import com.github.nvelychenko.drupalextend.extensions.getValue
+import com.github.nvelychenko.drupalextend.extensions.isInConfigurationDirectory
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
-import com.github.nvelychenko.drupalextend.forms.Settings
 import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -68,13 +66,17 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
             val map = hashMapOf<String, DrupalContentEntity>()
             val psiFile = inputData.psiFile
 
-            if (!isValidForIndex(inputData)) {
+            if (!inputData.isValidForIndex()) {
                 return@DataIndexer map
             }
 
             when (psiFile) {
-                is YAMLFile -> processYml(map, psiFile)
                 is PhpFile -> processPhp(map, psiFile)
+                is YAMLFile -> {
+                    if (inputData.isInConfigurationDirectory()) {
+                        processYml(map, psiFile)
+                    }
+                }
             }
 
             map
@@ -82,18 +84,6 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
     }
 
     private fun processYml(map: HashMap<String, DrupalContentEntity>, psiFile: YAMLFile) {
-        val file = psiFile.virtualFile
-        val baseDir = psiFile.project.guessProjectDir()
-
-        if (baseDir != null && file != null) {
-            val relativePath = VfsUtil.getRelativePath(file, baseDir, '/') ?: return
-
-            val configDIr = Settings.getInstance(psiFile.project).configDir;
-            if (!relativePath.contains(configDIr)) {
-                return
-            }
-        }
-
         if (!psiFile.name.startsWith("eck.eck_entity_type.")) {
             return
         }

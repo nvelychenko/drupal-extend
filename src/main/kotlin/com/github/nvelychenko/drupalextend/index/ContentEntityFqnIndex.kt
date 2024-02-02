@@ -64,7 +64,7 @@ class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
             val map = hashMapOf<String, ContentEntity>()
             val phpFile = inputData.psiFile as PhpFile
 
-            if (!isValidForIndex(inputData)) {
+            if (!inputData.isValidForIndex()) {
                 return@DataIndexer map
             }
 
