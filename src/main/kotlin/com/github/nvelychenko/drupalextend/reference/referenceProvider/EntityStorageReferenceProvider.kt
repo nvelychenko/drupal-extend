@@ -1,6 +1,7 @@
 package com.github.nvelychenko.drupalextend.reference.referenceProvider
 
 import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.reference.referenceType.DrupalStorageEntityReference
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -17,6 +18,9 @@ class EntityStorageReferenceProvider : PsiReferenceProvider() {
      * Finds \Drupal::entityTypeManager()->getStorage('ENTITY_TYPE') and adds reference to it
      */
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
+        val project = element.project
+        if (!project.drupalExtendSettings.isEnabled) return emptyArray()
+
         val psiReferences = PsiReference.EMPTY_ARRAY
 
         element as StringLiteralExpression

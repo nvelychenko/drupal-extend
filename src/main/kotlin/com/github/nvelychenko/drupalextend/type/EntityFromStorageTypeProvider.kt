@@ -5,6 +5,7 @@ import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.index.ConfigEntityIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -41,8 +42,10 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
     }
 
     override fun getType(psiElement: PsiElement): PhpType? {
+        val project = psiElement.project
         if (
-            DumbService.getInstance(psiElement.project).isDumb
+            !project.drupalExtendSettings.isEnabled
+            || DumbService.getInstance(project).isDumb
             || psiElement !is MethodReference || psiElement.isStatic
             || !possibleMethods.containsKey(psiElement.name)
         ) {

@@ -12,6 +12,7 @@ import com.github.nvelychenko.drupalextend.index.FieldsIndex
 import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE
 import com.github.nvelychenko.drupalextend.patterns.Patterns.LEAF_STRING_IN_SIMPLE_ARRAY_VALUE
 import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_LITERAL_INSIDE_METHOD_PARAMETER
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -65,6 +66,9 @@ class DrupalCompletionContributor : CompletionContributor() {
                     completionResultSet: CompletionResultSet
                 ) {
                     val psiElement = completionParameters.originalPosition ?: return
+
+                    if (!psiElement.project.drupalExtendSettings.isEnabled) return
+
                     val parent: PsiElement
                     val prevSibling = completionParameters.position.prevSibling
                     parent = if (prevSibling != null && prevSibling.node.elementType === PhpTokenTypes.ARROW) {

@@ -2,6 +2,7 @@ package com.github.nvelychenko.drupalextend.completion.providers
 
 import com.github.nvelychenko.drupalextend.extensions.getAllProjectKeys
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -18,8 +19,9 @@ class RenderElementTypeProvider : CompletionProvider<CompletionParameters>() {
         processingContext: ProcessingContext,
         completionResultSet: CompletionResultSet
     ) {
-
         val leaf = completionParameters.originalPosition ?: return
+
+        if (!leaf.project.drupalExtendSettings.isEnabled) return
 
         val hash = PsiTreeUtil.getParentOfType(leaf, ArrayHashElement::class.java)!!
 

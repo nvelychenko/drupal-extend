@@ -5,6 +5,7 @@ import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.extensions.isInConfigurationDirectory
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
 import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.CachedValueProvider
@@ -64,6 +65,9 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
     override fun getIndexer(): DataIndexer<String, DrupalContentEntity, FileContent> {
         return DataIndexer { inputData ->
             val map = hashMapOf<String, DrupalContentEntity>()
+
+            if (!inputData.project.drupalExtendSettings.isEnabled) return@DataIndexer map
+
             val psiFile = inputData.psiFile
 
             if (!inputData.isValidForIndex()) {

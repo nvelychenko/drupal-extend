@@ -4,6 +4,7 @@ import com.github.nvelychenko.drupalextend.extensions.containsRenderElement
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
 import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_IN_SIMPLE_ARRAY_VALUE
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -19,6 +20,8 @@ class RenderElementAnnotator : Annotator {
     private val fileBasedIndex: FileBasedIndex by lazy { FileBasedIndex.getInstance() }
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+        if (!element.project.drupalExtendSettings.isEnabled) return
+
         if (!STRING_IN_SIMPLE_ARRAY_VALUE.accepts(element)) {
             return
         }

@@ -6,6 +6,7 @@ import com.github.nvelychenko.drupalextend.extensions.isInConfigurationDirectory
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
 import com.github.nvelychenko.drupalextend.extensions.keyPath
 import com.github.nvelychenko.drupalextend.index.types.DrupalField
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -50,6 +51,9 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
     override fun getIndexer(): DataIndexer<String, DrupalField, FileContent> {
         return DataIndexer { inputData ->
             val map = hashMapOf<String, DrupalField>()
+
+            if (!inputData.project.drupalExtendSettings.isEnabled) return@DataIndexer map
+
             val psiFile = inputData.psiFile
 
             if (!inputData.isValidForIndex()) {
