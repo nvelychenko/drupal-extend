@@ -31,8 +31,9 @@
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.RenderElementIndex"/>
 
-        <psi.referenceContributor implementation="com.github.nvelychenko.drupalextend.reference.DrupalReferenceContributor"
-                                  language="PHP"/>
+        <psi.referenceContributor
+                implementation="com.github.nvelychenko.drupalextend.reference.DrupalReferenceContributor"
+                language="PHP"/>
 
         <annotator language="PHP" implementationClass="com.github.nvelychenko.drupalextend.psi.RenderElementAnnotator"/>
 
@@ -40,8 +41,10 @@
                 language="PHP"
                 implementationClass="com.github.nvelychenko.drupalextend.psi.RenderElementLineMarker"/>
 
-        <completion.contributor order="first" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalCompletionContributor"/>
-        <completion.contributor order="last" language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.FieldMagicMethodCompletionContributor"/>
+        <completion.contributor order="first" language="PHP"
+                                implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalCompletionContributor"/>
+        <completion.contributor order="last" language="PHP"
+                                implementationClass="com.github.nvelychenko.drupalextend.completion.FieldMagicMethodCompletionContributor"/>
 
         <projectConfigurable
                 instance="com.github.nvelychenko.drupalextend.project.configurable.DrupalConfig"
@@ -57,6 +60,7 @@
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityFromStorageTypeProvider"/>
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.StaticContentEntityTypeProvider"/>
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.FieldItemListTypeProvider"/>
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityQueryTypeProvider"/>
     </extensions>
 
     <depends>com.jetbrains.php</depends>

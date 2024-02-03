@@ -2,7 +2,12 @@ package com.github.nvelychenko.drupalextend.index.types
 
 import java.util.*
 
-data class DrupalFieldType(val fieldTypeId: String, val fqn: String, val listClassFqn: String, val properties: HashMap<String, String>) {
+data class DrupalFieldType(
+    val fieldTypeId: String,
+    val fqn: String,
+    val listClassFqn: String,
+    val properties: HashMap<String, String>
+) {
     override fun equals(other: Any?): Boolean {
         return if (this === other) {
             true

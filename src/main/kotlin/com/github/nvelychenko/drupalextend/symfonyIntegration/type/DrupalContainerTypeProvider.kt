@@ -26,7 +26,11 @@ class DrupalContainerTypeProvider : SymfonyContainerTypeProvider() {
             return null
         }
 
-        if (psiElement !is MethodReference || !PhpElementsUtil.isMethodWithFirstStringOrFieldReference(psiElement, "service")) {
+        if (psiElement !is MethodReference || !PhpElementsUtil.isMethodWithFirstStringOrFieldReference(
+                psiElement,
+                "service"
+            )
+        ) {
             return null
         }
 

@@ -10,7 +10,7 @@ data class RenderElementType(
     val typeClass: String,
     val properties: Array<RenderElementTypeProperty>,
     val renderElementType: String,
-): Serializable {
+) : Serializable {
     override fun equals(other: Any?): Boolean {
         return if (this === other) {
             true
@@ -44,7 +44,12 @@ data class RenderElementType(
     }
 
     @kotlinx.serialization.Serializable
-    data class RenderElementTypeProperty(val id: String, val priority: Double = 0.0, val type: String? = null, val doc: String? = null) {
+    data class RenderElementTypeProperty(
+        val id: String,
+        val priority: Double = 0.0,
+        val type: String? = null,
+        val doc: String? = null
+    ) {
         override fun equals(other: Any?): Boolean {
             return if (this === other) {
                 true

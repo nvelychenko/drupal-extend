@@ -44,7 +44,7 @@ class MagicPropertyFieldCompletionProvider : FieldCompletionProvider() {
         }
 
         if (memberReference !is FieldReference) return
-        
+
         processMemberReference(memberReference, result)
     }
 }

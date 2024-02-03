@@ -30,7 +30,8 @@ class RenderElementTypeProvider : PsiReferenceProvider() {
             return psiReferences
         }
 
-        val renderElement = FileBasedIndex.getInstance().getValue(RenderElementIndex.KEY, (hash.value as StringLiteralExpression).contents, project)
+        val renderElement = FileBasedIndex.getInstance()
+            .getValue(RenderElementIndex.KEY, (hash.value as StringLiteralExpression).contents, project)
             ?: return psiReferences
 
         return arrayOf(RenderElementReference(element, renderElement))

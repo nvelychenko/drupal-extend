@@ -2,7 +2,8 @@
 <idea-plugin>
 
     <extensions defaultExtensionNs="com.intellij">
-        <postStartupActivity implementation="com.github.nvelychenko.drupalextend.symfonyIntegration.SymfonyIntegrationStartupActivity"/>
+        <postStartupActivity
+                implementation="com.github.nvelychenko.drupalextend.symfonyIntegration.SymfonyIntegrationStartupActivity"/>
     </extensions>
     <extensions defaultExtensionNs="com.jetbrains.php">
         <typeProvider4

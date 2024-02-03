@@ -15,6 +15,7 @@ class RenderElementReference(element: PsiElement, private val renderElement: Ren
     private val phpIndex by lazy {
         PhpIndex.getInstance(project)
     }
+
     override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
         if (!project.drupalExtendSettings.isEnabled) return emptyArray()
 

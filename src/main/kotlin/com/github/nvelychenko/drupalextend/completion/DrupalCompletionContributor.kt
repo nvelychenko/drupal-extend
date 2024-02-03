@@ -1,16 +1,13 @@
 package com.github.nvelychenko.drupalextend.completion
 
-import com.github.nvelychenko.drupalextend.completion.providers.EntityStorageProvider
-import com.github.nvelychenko.drupalextend.completion.providers.FieldCompletionProvider
-import com.github.nvelychenko.drupalextend.completion.providers.RenderElementTypePropertiesProvider
-import com.github.nvelychenko.drupalextend.completion.providers.RenderElementTypeProvider
+import com.github.nvelychenko.drupalextend.completion.providers.*
 import com.github.nvelychenko.drupalextend.extensions.getAllProjectKeys
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.index.FieldTypeIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
-import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE
 import com.github.nvelychenko.drupalextend.patterns.Patterns.LEAF_STRING_IN_SIMPLE_ARRAY_VALUE
+import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE
 import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_LITERAL_INSIDE_METHOD_PARAMETER
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider
@@ -35,6 +32,12 @@ class DrupalCompletionContributor : CompletionContributor() {
     init {
         // \Drupal::entityTypeManager->getStorage('no|
         extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, EntityStorageProvider())
+
+        // \Drupal::entityTypeManager->getStorage('no|
+        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, StaticEntityQueryProvider())
+
+        // \Drupal::entityTypeManager->getQuery()->condition('
+        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, EntityQueryConditionFieldProvider())
 
         // $node->set('fi
         // $node->get('fi|

@@ -37,7 +37,7 @@ class FieldPropertyReference(element: PsiElement, val entityTypeId: String, priv
         return multiResolve()
     }
 
-    fun multiResolve(): Array<ResolveResult> = HashMap<VirtualFile, String>().apply {
+    private fun multiResolve(): Array<ResolveResult> = HashMap<VirtualFile, String>().apply {
         val processor = FileBasedIndex.ValueProcessor<DrupalField> { file, value -> put(file, value.path); true }
         FileBasedIndex.getInstance()
             .processValues(FieldsIndex.KEY, "${entityTypeId}|${fieldName}", null, processor, scope)

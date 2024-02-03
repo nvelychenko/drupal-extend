@@ -8,12 +8,14 @@ import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex.Companion.GENERAL_BASE_FIELD_KEY_PREFIX
+import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.project.Project
 import com.intellij.util.ProcessingContext
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.PhpClassHierarchyUtils
@@ -27,6 +29,11 @@ import com.jetbrains.php.lang.psi.elements.*
  * $node->set('field_|
  */
 open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() {
+    val fileBasedIndex: FileBasedIndex by lazy {
+        FileBasedIndex.getInstance()
+    }
+
+    protected open val methodsToAutocomplete = arrayOf("get", "set")
 
     open val priority = 10.0
 
@@ -45,27 +52,26 @@ open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() 
 
         val methodReference = parameterList.parent as MethodReference
 
-        if (!arrayOf("get", "set").contains(methodReference.name)) return
+        if (!methodsToAutocomplete.contains(methodReference.name)) return
 
         processMemberReference(methodReference, result)
     }
 
-    fun processMemberReference(memberReference: MemberReference, result: CompletionResultSet) {
+    open fun processMemberReference(memberReference: MemberReference, result: CompletionResultSet) {
         when (val classReference = memberReference.classReference) {
-            is PhpReference -> getFieldCompletionForClassReference(classReference, result)
+            is PhpReference -> getContentEntityFromReferenceAndBuildAutocomplete(classReference, result)
             is ArrayAccessExpression -> (classReference.value as? PhpReference)?.let {
-                getFieldCompletionForClassReference(it, result, true)
+                getContentEntityFromReferenceAndBuildAutocomplete(it, result, true)
             }
         }
     }
 
-    private fun getFieldCompletionForClassReference(
+    private fun getContentEntityFromReferenceAndBuildAutocomplete(
         classReference: PhpReference,
         result: CompletionResultSet,
         isArrayAccessExpression: Boolean = false
     ) {
         val project = classReference.project
-        val index = FileBasedIndex.getInstance()
 
         val globalTypes = classReference.globalType.types.map {
             // Situation is following, there is array of nodes. Node[]
@@ -75,12 +81,24 @@ open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() 
             it.takeIf { isArrayAccessExpression }?.replace("[]", "") ?: it
         }.takeIf { it.isNotEmpty() } ?: return
 
-        val contentEntity = index.getAllProjectKeys(ContentEntityFqnIndex.KEY, project)
+        val contentEntityFqn = fileBasedIndex.getAllProjectKeys(ContentEntityFqnIndex.KEY, project)
             .find { globalTypes.contains(it) }
-            ?.let { index.getValue(ContentEntityFqnIndex.KEY, it, project) } ?: return
+            ?.let { fileBasedIndex.getValue(ContentEntityFqnIndex.KEY, it, project) } ?: return
 
+        val contentEntity =
+            fileBasedIndex.getValue(ContentEntityIndex.KEY, contentEntityFqn.entityTypeId, project) ?: return
+
+        buildResultForEntity(contentEntity, project, result)
+    }
+
+    protected fun buildResultForEntity(
+        contentEntity: DrupalContentEntity,
+        project: Project,
+        result: CompletionResultSet
+    ) {
         val entityTypeId = contentEntity.entityTypeId
-        val keys = index.getValue(ContentEntityIndex.KEY, entityTypeId, project)?.keys?.toMutableMap() ?: return
+        val keys =
+            fileBasedIndex.getValue(ContentEntityIndex.KEY, entityTypeId, project)?.keys?.toMutableMap() ?: return
 
         // General fields definitions are usually preset in subclasses.
         val additionalClasses = mutableListOf<String>()
@@ -95,12 +113,12 @@ open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() 
                 }
             }
 
-        index.getAllValuesWithKeyPrefix(FieldsIndex.KEY, "$entityTypeId|", project)
+        fileBasedIndex.getAllValuesWithKeyPrefix(FieldsIndex.KEY, "$entityTypeId|", project)
             .toMutableList()
             // Merge additional fields.
             .let { main ->
                 additionalClasses.forEach {
-                    main.addAll(index.getAllValuesWithKeyPrefix(FieldsIndex.KEY, "$it|", project))
+                    main.addAll(fileBasedIndex.getAllValuesWithKeyPrefix(FieldsIndex.KEY, "$it|", project))
                 }
 
                 main

@@ -56,7 +56,11 @@ class StaticContentEntityTypeProvider : PhpTypeProvider4 {
 
         for (partialSignature in signature.split("|")) {
             if (partialSignature.startsWith("#M#C")) {
-                val contentEntity = fileBasedIndex.getValue(ContentEntityFqnIndex.KEY, partialSignature.substring(4).substringBefore('.'), project) ?: continue
+                val contentEntity = fileBasedIndex.getValue(
+                    ContentEntityFqnIndex.KEY,
+                    partialSignature.substring(4).substringBefore('.'),
+                    project
+                ) ?: continue
 
                 val methodType = possibleMethods[methodName] ?: ""
                 return PhpType().add(contentEntity.fqn + methodType)

@@ -287,7 +287,7 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
     companion object {
         val KEY = ID.create<String, DrupalField>("com.github.nvelychenko.drupalextend.index.fields")
 
-        val GENERAL_BASE_FIELD_KEY_PREFIX = "KEY|"
+        const val GENERAL_BASE_FIELD_KEY_PREFIX = "KEY|"
     }
 
     private data class FieldRepresentation(val key: String, val value: String, val path: String?)

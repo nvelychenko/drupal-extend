@@ -93,7 +93,7 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
         var type = "RenderElement"
 
         if (renderElement == null) {
-           renderElement = docComment.getTagElementsByName("@FormElement").firstOrNull() ?: return
+            renderElement = docComment.getTagElementsByName("@FormElement").firstOrNull() ?: return
             type = "FormElement"
         }
 
@@ -109,7 +109,8 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
                     is BinaryExpression -> {
                         var value = mutableListOf<RenderElementTypeProperty>()
                         if (it.leftOperand is ArrayCreationExpression) {
-                            value = processArrayCreationExpression(it.leftOperand as ArrayCreationExpression).toMutableList()
+                            value =
+                                processArrayCreationExpression(it.leftOperand as ArrayCreationExpression).toMutableList()
                         }
 
                         if (it.rightOperand is ArrayCreationExpression) {
@@ -117,6 +118,7 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
                         }
                         value.toTypedArray()
                     }
+
                     else -> null
                 }
             } ?: return
@@ -136,7 +138,7 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
         expression.hashElements.forEach { hashElement ->
             val key = hashElement.key
             if (key is StringLiteralExpression) {
-                parameters.add(RenderElementTypeProperty(key.contents, 10.0,null, null))
+                parameters.add(RenderElementTypeProperty(key.contents, 10.0, null, null))
             }
 
         }
@@ -153,14 +155,17 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
             val indexValue = index.value
 
             if (indexValue is StringLiteralExpression) {
-                parameters.add(RenderElementTypeProperty(indexValue.contents, 10.0,null, null))
+                parameters.add(RenderElementTypeProperty(indexValue.contents, 10.0, null, null))
             }
         }
 
         return parameters.toTypedArray()
     }
 
-    private fun getAdditionalParametersFromDoc(docCommentText: String, defaultPriority: Double = 0.0): Array<RenderElementTypeProperty> {
+    private fun getAdditionalParametersFromDoc(
+        docCommentText: String,
+        defaultPriority: Double = 0.0
+    ): Array<RenderElementTypeProperty> {
         val doc = docCommentText.replace(docCommentText.substringBefore(" * - #"), "")
 
 
@@ -174,14 +179,14 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
             val hasType = rowDocument.startsWith("${id}: (")
 
             val type = rowDocument.takeIf { hasType }?.substringAfter("(")?.substringBefore(")")
-    //
-    //            val documentation = if (hasDocument) {
-    //                document.substringAfter("${type})")
-    //            } else {
-    //                document.substringAfter("${id}: ").trim()
-    //            }
+            //
+            //            val documentation = if (hasDocument) {
+            //                document.substringAfter("${type})")
+            //            } else {
+            //                document.substringAfter("${id}: ").trim()
+            //            }
 
-            parameters.add(RenderElementTypeProperty(id, defaultPriority ,type, null))
+            parameters.add(RenderElementTypeProperty(id, defaultPriority, type, null))
         }
         return parameters.toTypedArray()
     }

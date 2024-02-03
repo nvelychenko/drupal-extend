@@ -89,7 +89,8 @@ object Patterns {
     val LEAF_STRING_IN_SIMPLE_ARRAY_VALUE by lazy {
         or(
             psiElement(PhpTokenTypes.STRING_LITERAL).withParent(STRING_IN_SIMPLE_ARRAY_VALUE).withLanguage(phpLanguage),
-            psiElement(PhpTokenTypes.STRING_LITERAL_SINGLE_QUOTE).withParent(STRING_IN_SIMPLE_ARRAY_VALUE).withLanguage(phpLanguage)
+            psiElement(PhpTokenTypes.STRING_LITERAL_SINGLE_QUOTE).withParent(STRING_IN_SIMPLE_ARRAY_VALUE)
+                .withLanguage(phpLanguage)
         )
     }
 
