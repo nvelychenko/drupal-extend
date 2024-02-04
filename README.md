@@ -31,6 +31,8 @@ The plugin is enhancement for your Drupal development experience.
 
 * Render element type highlight (Annotator)
 
+* Fields autocomplete in content entity queries and entity storages autocomplete in `\Drupal::entityQuery()`
+
 * (Optional) Line marker for render elements. It is disabled by default to enable it go to <kbd>Settings</kbd> -> <kbd>Editor</kbd> -> <kbd>Gutter Icons</kbd> -> <kbd>Render Element Type</kbd>
 
 ![Render Element line marker example](./assets/line_marker_example.png)
