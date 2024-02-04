@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2024-02-04
+
+### Added
+
+- Fields autocomplete for entity query. Entities autocomplete for \Drupal::entityQuery
+
 ## [0.4.0] - 2024-02-02
 
 ### Added
@@ -81,7 +87,8 @@ Added:
 - Content entity provider was not working in certain circumstances
 - Deprecated usage of baseDir
 
-[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/nvelychenko/drupal-extend/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/nvelychenko/drupal-extend/compare/v0.3.0...v0.3.1
