@@ -1,11 +1,16 @@
 package com.github.nvelychenko.drupalextend.index
 
 import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
+import com.github.nvelychenko.drupalextend.extensions.getModificationTrackerForIndexId
+import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
 import com.github.nvelychenko.drupalextend.index.types.DrupalFieldType
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
@@ -158,8 +163,27 @@ class FieldTypeIndex : FileBasedIndexExtension<String, DrupalFieldType>() {
     override fun getVersion(): Int = 2
 
     companion object {
+        val index: FileBasedIndex by lazy {
+            FileBasedIndex.getInstance()
+        }
+
         val KEY = ID.create<String, DrupalFieldType>("com.github.nvelychenko.drupalextend.index.field_type")
         const val DUMMY_LIST_CLASS = "Dummy"
+        @Synchronized
+        fun getAllFqns(project: Project): HashMap<String, DrupalFieldType> {
+            return CachedValuesManager.getManager(project).getCachedValue(project) {
+                val results = hashMapOf<String, DrupalFieldType>()
+
+                index.getAllKeys(KEY, project).forEach {
+                    index.getValue(KEY, it, project)?.let { contentEntity ->
+                        results[contentEntity.fqn] = contentEntity
+                    }
+                }
+
+                CachedValueProvider.Result.create(results, getModificationTrackerForIndexId(project, KEY, index))
+            }
+        }
     }
+
 
 }
