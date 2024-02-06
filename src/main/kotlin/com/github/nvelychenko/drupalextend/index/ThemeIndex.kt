@@ -1,7 +1,9 @@
 package com.github.nvelychenko.drupalextend.index
 
+import com.github.nvelychenko.drupalextend.index.dataExternalizer.SerializedObjectDataExternalizer
+import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
+import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
 import com.github.nvelychenko.drupalextend.index.types.DrupalTheme
-import com.github.nvelychenko.drupalextend.util.isValidForIndex
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.util.PsiTreeUtil
@@ -10,113 +12,112 @@ import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
 import com.jetbrains.php.lang.PhpFileType
-import com.jetbrains.php.lang.psi.PhpFile
+import com.jetbrains.php.lang.psi.PhpPsiUtil
 import com.jetbrains.php.lang.psi.elements.*
 import com.jetbrains.php.lang.psi.elements.Function
-import java.io.DataInput
-import java.io.DataOutput
+import kotlinx.serialization.serializer
 
 class ThemeIndex : FileBasedIndexExtension<String, DrupalTheme>() {
-    private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
-
-    private val myDataExternalizer: DataExternalizer<DrupalTheme> =
-        object : DataExternalizer<DrupalTheme> {
-            override fun save(out: DataOutput, value: DrupalTheme) {
-                out.writeUTF(value.themeName)
-
-                out.writeInt(value.variables.size)
-                for (key in value.variables) {
-                    out.writeUTF(key)
-                }
-            }
-
-            override fun read(input: DataInput): DrupalTheme {
-                val theme = input.readUTF()
-
-                val keys = mutableListOf<String>()
-                for (i in 1..input.readInt()) {
-                    keys.add(input.readUTF())
-                }
-
-                return DrupalTheme(theme, keys.toTypedArray())
-            }
-        }
-
-    override fun getName(): ID<String, DrupalTheme> {
-        return KEY
-    }
 
     override fun getIndexer(): DataIndexer<String, DrupalTheme, FileContent> {
         return DataIndexer { inputData ->
             val map = hashMapOf<String, DrupalTheme>()
-            val psiFile = inputData.psiFile
 
-            if (!isValidForIndex(inputData)) {
+            if (!inputData.isValidForIndex()) {
                 return@DataIndexer map
             }
 
             val fileName = inputData.fileName
             val moduleName = fileName.substringBefore(".")
-            if (!fileName.endsWith(".module")) {
+            if (!fileName.endsWith(".module") && fileName != "theme.inc") {
                 return@DataIndexer map
             }
 
-            inputData.psiFile.accept(object : PsiRecursiveElementWalkingVisitor() {
-                override fun visitElement(element: PsiElement) {
-                    if (element is Function && element.name == moduleName + "_theme") {
-                        processPhp(map, psiFile as PhpFile, element)
+            val themeHook = getThemeHook(inputData, moduleName) ?: return@DataIndexer map
+            when (val returnType = PsiTreeUtil.findChildOfType(themeHook, PhpReturn::class.java)?.firstPsiChild) {
+                is ArrayCreationExpression -> processArrayCreationExpression(returnType, map)
+                is Variable -> processVariable(returnType, themeHook, map)
+                is FunctionReference -> {
+                    if (returnType.name == "array_merge") {
+                        returnType.parameters.forEach {
+                            if (it is ArrayCreationExpression) {
+                                processArrayCreationExpression(it, map)
+                            }
+                        }
                     }
-
-                    super.visitElement(element)
                 }
-            })
+            }
 
             return@DataIndexer map
         }
     }
 
-    private fun processPhp(map: HashMap<String, DrupalTheme>, phpFile: PhpFile, function: Function): HashMap<String, DrupalTheme> {
+    private fun processVariable(returnVariable: Variable, themeHook: Function, map: HashMap<String, DrupalTheme>) {
+        for (variable in themeHook.findVariablesByName(returnVariable.name)) {
+            val assignment = PhpPsiUtil.getParentOfClass(variable, AssignmentExpression::class.java) ?: continue
 
-        val returnType = PsiTreeUtil.findChildOfType(function, PhpReturn::class.java)?.firstPsiChild
-        if (returnType !is Variable && returnType !is ArrayCreationExpression) {
-            return map
+            val propertiesHash = assignment.variable as? ArrayCreationExpression ?: continue
+
+            // $theme['foo']
+            val themeName = ((assignment.value as? ArrayAccessExpression)?.index as? StringLiteralExpression)?.contents ?: continue
+
+            map[themeName] = DrupalTheme(themeName, getThemeVariables(propertiesHash))
         }
+    }
 
-        // @todo Implement ability to process ArrayCreationExpression
-        if (returnType is ArrayCreationExpression) {
-            for (templateName in returnType.children) {
-                if (templateName is ArrayHashElement && templateName.key is StringLiteralExpression) {
-                    val childValue = PsiTreeUtil.findChildOfType(templateName, ArrayCreationExpression::class.java) ?: continue
+    private fun processArrayCreationExpression(returnType: ArrayCreationExpression, map: HashMap<String, DrupalTheme>) {
+        top@ for (topHash in returnType.hashElements) {
+            val propertiesHash = topHash.value
+            val themeNamePsi = topHash.key
+            if (themeNamePsi !is StringLiteralExpression || themeNamePsi.contents.isEmpty() || propertiesHash !is ArrayCreationExpression) continue
 
-                    for (templateVariables in childValue.children) {
-                        val key = templateName.key as StringLiteralExpression
-                        var variables = mutableListOf<String>();
+            map[themeNamePsi.contents] = DrupalTheme(themeNamePsi.contents, getThemeVariables(propertiesHash))
 
-                        if (templateVariables is ArrayHashElement
-                            && templateVariables.key is StringLiteralExpression
-                            && (templateVariables.key as StringLiteralExpression).contents == "variables"
-                            ) {
-                            val variablesValue = PsiTreeUtil.findChildOfType(templateVariables, ArrayCreationExpression::class.java) ?: continue
+        }
+    }
 
-                            variablesValue.children.forEach {
-                                it as ArrayHashElement
-                                val variablesKey = it.key
-                                if (variablesKey is StringLiteralExpression) {
-                                    variables.add(variablesKey.contents)
-                                }
-                            }
+    private fun getThemeVariables(propertiesHash: ArrayCreationExpression): Array<String> {
+        val variables = mutableListOf<String>()
+        for (it in propertiesHash.hashElements) {
+            val variablesHash = it.value
+            if ((it.key as? StringLiteralExpression)?.contents != "variables" || variablesHash !is ArrayCreationExpression) continue
 
-                        }
-
-                        map[key.contents] = DrupalTheme(key.contents, variables.toTypedArray())
-
-                    }
-
+            variablesHash.hashElements.forEach {
+                val themeName = it.key
+                if (themeName is StringLiteralExpression && themeName.contents.isNotEmpty()) {
+                    variables.add(themeName.contents)
                 }
             }
+
+            return variables.toTypedArray()
         }
 
-        return map
+        return emptyArray()
+    }
+
+    private fun getThemeHook(inputData: FileContent, moduleName: String): Function? {
+        var themeHook: Function? = null
+        val allowedHookNames = arrayOf(moduleName + "_theme", "drupal_common_theme")
+        inputData.psiFile.accept(object : PsiRecursiveElementWalkingVisitor() {
+            override fun visitElement(element: PsiElement) {
+                if (element is Function && (allowedHookNames.contains(element.name))) {
+                    themeHook = element
+                }
+
+                super.visitElement(element)
+            }
+        })
+
+        return themeHook
+    }
+
+    private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
+
+    private val myDataExternalizer: DataExternalizer<DrupalTheme> =
+        SerializedObjectDataExternalizer(serializer<DrupalTheme>())
+
+    override fun getName(): ID<String, DrupalTheme> {
+        return KEY
     }
 
     override fun getKeyDescriptor(): KeyDescriptor<String> = myKeyDescriptor
@@ -129,12 +130,10 @@ class ThemeIndex : FileBasedIndexExtension<String, DrupalTheme>() {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 1
+    override fun getVersion(): Int = 0
 
     companion object {
         val KEY = ID.create<String, DrupalTheme>("com.github.nvelychenko.drupalextend.index.hook_themes")
     }
-
-    private data class FieldRepresentation(val key: String, val value: String, val path: String)
 
 }

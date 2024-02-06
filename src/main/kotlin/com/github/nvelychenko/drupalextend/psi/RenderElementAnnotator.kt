@@ -1,8 +1,10 @@
 package com.github.nvelychenko.drupalextend.psi
 
 import com.github.nvelychenko.drupalextend.extensions.containsRenderElement
+import com.github.nvelychenko.drupalextend.extensions.containsTheme
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
+import com.github.nvelychenko.drupalextend.index.ThemeIndex
 import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_IN_SIMPLE_ARRAY_VALUE
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.lang.annotation.AnnotationHolder
@@ -28,18 +30,32 @@ class RenderElementAnnotator : Annotator {
 
         val hash = PsiTreeUtil.getParentOfType(element, ArrayHashElement::class.java) ?: return
 
-        if (!hash.containsRenderElement()) {
+
+        val tooltip = if (hash.containsRenderElement()) {
+            fileBasedIndex.getValue(
+                RenderElementIndex.KEY,
+                (hash.value as StringLiteralExpression).contents,
+                element.project
+            )?.renderElementType
+        } else if (hash.containsTheme()) {
+            fileBasedIndex.getValue(
+                ThemeIndex.KEY,
+                (hash.value as StringLiteralExpression).contents,
+                element.project
+            )?.themeName
+                ?: return
+
+            "Theme"
+        } else {
             return
         }
 
-        val project = element.project
-        val renderElement =
-            fileBasedIndex.getValue(RenderElementIndex.KEY, (hash.value as StringLiteralExpression).contents, project)
-                ?: return
+        if (tooltip == null) return
+
 
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
             .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.IDENTIFIER)
-            .tooltip(renderElement.renderElementType)
+            .tooltip(tooltip)
             .create()
 
     }

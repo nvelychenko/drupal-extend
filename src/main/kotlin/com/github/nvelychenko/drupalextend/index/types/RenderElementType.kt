@@ -1,16 +1,16 @@
 package com.github.nvelychenko.drupalextend.index.types
 
+import kotlinx.serialization.Serializable
 import org.apache.commons.lang3.builder.HashCodeBuilder
-import java.io.Serializable
 import java.util.*
 
-@kotlinx.serialization.Serializable
+@Serializable
 data class RenderElementType(
     val typeId: String,
     val typeClass: String,
     val properties: Array<RenderElementTypeProperty>,
     val renderElementType: String,
-) : Serializable {
+) {
     override fun equals(other: Any?): Boolean {
         return if (this === other) {
             true
@@ -43,7 +43,7 @@ data class RenderElementType(
         return builder.hashCode()
     }
 
-    @kotlinx.serialization.Serializable
+    @Serializable
     data class RenderElementTypeProperty(
         val id: String,
         val priority: Double = 0.0,

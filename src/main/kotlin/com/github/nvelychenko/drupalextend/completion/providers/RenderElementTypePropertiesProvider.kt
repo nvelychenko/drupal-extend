@@ -1,10 +1,10 @@
 package com.github.nvelychenko.drupalextend.completion.providers
 
+import com.github.nvelychenko.drupalextend.completion.utils.RenderElementTypeInsertionHandler
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
@@ -17,6 +17,7 @@ import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 class RenderElementTypePropertiesProvider : CompletionProvider<CompletionParameters>() {
 
     private val fileBasedIndex by lazy { FileBasedIndex.getInstance() }
+    private val insertHandler by lazy { RenderElementTypeInsertionHandler() }
 
     public override fun addCompletions(
         completionParameters: CompletionParameters,
@@ -61,28 +62,12 @@ class RenderElementTypePropertiesProvider : CompletionProvider<CompletionParamet
                     LookupElementBuilder.create(it.id.replace("#", ""))
                         .withTypeText(it.type)
                         .withBoldness(it.priority > 0.0)
-                        .withInsertHandler(RenderElementTypeInsertionHandler()),
+                        .withInsertHandler(insertHandler),
                     it.priority
                 )
             )
         }
     }
 
-    private class RenderElementTypeInsertionHandler : InsertHandler<LookupElement> {
-        override fun handleInsert(context: InsertionContext, item: LookupElement) {
-            val document = context.document
-            val editor = context.editor
-
-
-            val fileText: String = editor.document.text
-            if (fileText.isEmpty()) {
-                return
-            }
-
-            if (document.charsSequence[context.startOffset - 1] != '#') {
-                context.document.insertString(context.startOffset, "#")
-            }
-        }
-    }
 
 }

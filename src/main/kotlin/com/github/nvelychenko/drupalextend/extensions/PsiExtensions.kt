@@ -46,6 +46,13 @@ fun PhpClass.isSuperInterfacesOf(interfaces: Array<PhpClass>): Boolean {
     return isInstanceOf
 }
 
+fun ArrayHashElement.containsTheme(): Boolean {
+    val key = this.key as? StringLiteralExpression ?: return false
+    val value = this.value as? StringLiteralExpression ?: return false
+
+    return key.contents == "#theme" && value.contents.isNotEmpty()
+}
+
 fun ArrayHashElement.containsRenderElement(): Boolean {
     val key = this.key as? StringLiteralExpression ?: return false
     val value = this.value as? StringLiteralExpression ?: return false
