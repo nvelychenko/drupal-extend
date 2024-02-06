@@ -1,18 +1,16 @@
 package com.github.nvelychenko.drupalextend.type
 
-import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
+import com.github.nvelychenko.drupalextend.extensions.getValue
+import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
 import com.github.nvelychenko.drupalextend.index.FieldTypeIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
-import com.jetbrains.php.lang.psi.elements.FieldReference
-import com.jetbrains.php.lang.psi.elements.MethodReference
-import com.jetbrains.php.lang.psi.elements.PhpClass
-import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
+import com.jetbrains.php.PhpIndex
+import com.jetbrains.php.lang.psi.elements.*
 import com.jetbrains.php.lang.psi.resolve.types.PhpType
 import com.jetbrains.php.lang.psi.resolve.types.PhpTypeProvider4
 import org.apache.commons.lang3.StringUtils
@@ -49,12 +47,15 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
             return null
         }
 
-        if (!signature.contains(EntityStorageTypeProvider.Util.SPLIT_KEY)) {
-            return null
+        val classReference = when (psiElement) {
+            is MethodReference -> psiElement.classReference
+            is FieldReference -> psiElement.classReference
+            else -> return null
         }
-        val entityTypeId = signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore('.')
+        if (classReference !is Variable) return null
 
-        return PhpType().add("#$key$entityTypeId$endKey$name")
+        val variableSignature = classReference.type.toString()
+        return PhpType().add("#$key$variableSignature$endKey$name")
     }
 
     private fun getSignature(psiElement: PsiElement): Array<String>? {
@@ -82,36 +83,58 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
     }
 
 
-    override fun complete(expression: String?, project: Project?): PhpType? {
-        if (expression == null || project == null || !expression.contains(key))
-            return null
+    override fun complete(expression: String, project: Project): PhpType? {
+        if (!expression.contains(endKey)) return null
+        val (signatures, fieldName) = expression.substring(2).split(endKey)
 
-        val (entityTypeId, fieldName) = expression.replace("#$key", "").split(endKey)
+        val entityTypes = mutableListOf<String>()
+        if (signatures.contains("#" + EntityFromStorageTypeProvider.KEY) && signatures.contains(EntityFromStorageTypeProvider.SPLIT_KEY)) {
+            val entityTypeId = signatures.substringAfter(EntityFromStorageTypeProvider.KEY).substringBefore(EntityFromStorageTypeProvider.SPLIT_KEY)
+            entityTypes.add(entityTypeId)
+        }
+        else {
+            val objects = mutableListOf<PhpNamedElement>()
 
-        val allScope = GlobalSearchScope.allScope(project)
+            val index = PhpIndex.getInstance(project)
 
-        val entityTypeIndex = fileBasedIndex.getValues(ContentEntityIndex.KEY, entityTypeId, allScope)
+            for (signature in signatures.split('|')) {
+                if (signature.startsWith('#')) {
+                    objects.addAll(index.getBySignature(signature))
+                }
+                else {
+                    objects.addAll(index.getAnyByFQN(signature))
+                }
+            }
 
-        if (entityTypeIndex.isEmpty()) return null
 
-        val entityType = entityTypeIndex.first()
+            for (clazz in objects) {
+                if (clazz !is PhpClass) continue
 
-        val fieldIndex = fileBasedIndex
-            .getValues(FieldsIndex.KEY, "${entityType.entityTypeId}|${fieldName}", allScope)
+                val entity = FileBasedIndex.getInstance().getValue(ContentEntityFqnIndex.KEY, clazz.fqn, project)
+                        ?: continue
 
-        if (fieldIndex.isEmpty()) return null
-
-        val fieldTypeIndex = fileBasedIndex.getValues(FieldTypeIndex.KEY, fieldIndex.first().fieldType, allScope)
-
-        if (fieldTypeIndex.isEmpty()) return null
-
-        val listClassFqn = if (fieldTypeIndex.first().listClassFqn != FieldTypeIndex.DUMMY_LIST_CLASS) {
-            fieldTypeIndex.first().listClassFqn
-        } else {
-            "\\Drupal\\Core\\Field\\FieldItemList"
+                val entityTypeId = entity.entityTypeId
+                entityTypes.add(entityTypeId)
+            }
         }
 
-        return PhpType().add(listClassFqn)
+        val type = PhpType()
+
+        entityTypes.forEach {
+            val field = fileBasedIndex.getValue(FieldsIndex.KEY, "${it}|${fieldName}", project) ?: return null
+
+            val fieldType = fileBasedIndex.getValue(FieldTypeIndex.KEY, field.fieldType, project) ?: return null
+
+            type.add(if (fieldType.listClassFqn != FieldTypeIndex.DUMMY_LIST_CLASS) {
+                fieldType.listClassFqn
+            } else {
+                "\\Drupal\\Core\\Field\\FieldItemList"
+            })
+
+            type.add("${fieldType.fqn}[]")
+        }
+
+        return type
     }
 
     override fun getBySignature(

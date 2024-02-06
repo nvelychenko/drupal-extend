@@ -34,11 +34,10 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
         Pair("loadMultiple", "[]"),
     )
 
-    private val splitKey = '\u0421'
     private val unclearKey = '\u0422'
 
     override fun getKey(): Char {
-        return '\u0420'
+        return KEY
     }
 
     override fun getType(psiElement: PsiElement): PhpType? {
@@ -60,7 +59,7 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
 
         val entityTypeId = signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore(".load")
 
-        return PhpType().add("#$key$entityTypeId$splitKey${psiElement.name}")
+        return PhpType().add("#$key$entityTypeId$SPLIT_KEY${psiElement.name}")
     }
 
     override fun complete(expression: String?, project: Project?): PhpType? {
@@ -71,8 +70,8 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
 
         val entityTypeId: String?
         val methodName: String
-        if (clearedExpression.contains(splitKey)) {
-            val split = clearedExpression.split(splitKey)
+        if (clearedExpression.contains(SPLIT_KEY)) {
+            val split = clearedExpression.split(SPLIT_KEY)
             entityTypeId = split[0]
             methodName = split[1]
         } else if (clearedExpression.contains(unclearKey)) {
@@ -155,5 +154,8 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
         return emptyList()
     }
 
-
+    companion object {
+        const val KEY = '\u0420'
+        const val SPLIT_KEY = '\u0421'
+    }
 }
