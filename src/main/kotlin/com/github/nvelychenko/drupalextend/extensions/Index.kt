@@ -1,5 +1,7 @@
-package com.github.nvelychenko.drupalextend.util
+package com.github.nvelychenko.drupalextend.extensions
 
+import com.github.nvelychenko.drupalextend.project.DEFAULT_CONFIG_SYNC_DIRECTORY
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.Key
@@ -16,22 +18,34 @@ import com.intellij.util.indexing.ID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-fun isValidForIndex(inputData: FileContent): Boolean {
-    val fileName = inputData.psiFile.name
+fun FileContent.isValidForIndex(): Boolean {
+    val fileName = psiFile.name
     if (fileName.startsWith(".") || fileName.endsWith("Test")) {
         return false
     }
 
-    val projectDir = inputData.project.guessProjectDir() ?: return true
+    val projectDir = project.guessProjectDir() ?: return true
 
-    // possible fixture or test file
-    // to support also library paths, only filter them on project files
-    val relativePath = VfsUtil.getRelativePath(inputData.file, projectDir, '/')
+    val relativePath = VfsUtil.getRelativePath(file, projectDir, '/')
     return !(relativePath != null && (relativePath.contains("/Test/")
             || relativePath.contains("/Tests/") || relativePath.contains("/Fixture/")
             || relativePath.contains("/tests/") || relativePath.contains("/fixtures/")
             || relativePath.contains("/tests/") || relativePath.contains("/fixture/")
             || relativePath.contains("/Fixtures/")))
+}
+
+fun FileContent.isInConfigurationDirectory(): Boolean {
+    val configDirectory = project.drupalExtendSettings.configDirectory
+    if (configDirectory == DEFAULT_CONFIG_SYNC_DIRECTORY) {
+        val baseDir = project.guessProjectDir() ?: return true
+
+        val relativePath =
+            VfsUtil.getRelativePath(file, baseDir, '/') ?: return true
+
+        return relativePath.contains(DEFAULT_CONFIG_SYNC_DIRECTORY)
+    }
+
+    return VfsUtil.isEqualOrAncestor(configDirectory, file.path)
 }
 
 private val keyForProvider: ConcurrentMap<String, Key<CachedValue<*>>> = ConcurrentHashMap()
@@ -84,7 +98,7 @@ fun <K : Any, V> FileBasedIndex.getAllValuesWithKeyPrefix(
         getKey("${id.name}${prefix}"),
         {
             val result = getAllKeys(id, project)
-                .filter { it is String && it.contains(prefix) }
+                .filter { it is String && it.startsWith(prefix) }
                 .mapNotNull {
                     getValues(id, it, GlobalSearchScope.allScope(project)).firstOrNull()
                 }

@@ -2,7 +2,12 @@ package com.github.nvelychenko.drupalextend.index.types
 
 import java.util.*
 
-data class DrupalContentEntity(val entityTypeId: String, val fqn: String, val keys: HashMap<String, String>, val storageHandler: String) {
+data class DrupalContentEntity(
+    val entityTypeId: String,
+    val fqn: String,
+    val keys: HashMap<String, String>,
+    val storageHandler: String
+) {
     override fun equals(other: Any?): Boolean {
         return if (this === other) {
             true

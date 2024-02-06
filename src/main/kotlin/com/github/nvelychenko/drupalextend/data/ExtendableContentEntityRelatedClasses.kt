@@ -1,15 +1,27 @@
-package com.github.nvelychenko.drupalextend.value
+package com.github.nvelychenko.drupalextend.data
 
 data class ExtendableContentEntityRelatedClasses(val className: String, val methodName: String) {
 
     companion object {
         private val allPossibleExtendableContentEntityClasses = arrayOf(
-            ExtendableContentEntityRelatedClasses("\\Drupal\\Core\\Entity\\RevisionLogEntityTrait", "revisionLogBaseFieldDefinitions"),
-            ExtendableContentEntityRelatedClasses("\\Drupal\\Core\\Entity\\EntityPublishedTrait", "publishedBaseFieldDefinitions"),
+            ExtendableContentEntityRelatedClasses(
+                "\\Drupal\\Core\\Entity\\RevisionLogEntityTrait",
+                "revisionLogBaseFieldDefinitions"
+            ),
+            ExtendableContentEntityRelatedClasses(
+                "\\Drupal\\Core\\Entity\\EntityPublishedTrait",
+                "publishedBaseFieldDefinitions"
+            ),
             ExtendableContentEntityRelatedClasses("\\Drupal\\user\\EntityOwnerTrait", "ownerBaseFieldDefinitions"),
             ExtendableContentEntityRelatedClasses("\\Drupal\\Core\\Entity\\ContentEntityBase", "baseFieldDefinitions"),
-            ExtendableContentEntityRelatedClasses("\\Drupal\\Core\\Entity\\EditorialContentEntityBase", "baseFieldDefinitions"),
-            ExtendableContentEntityRelatedClasses("\\Drupal\\Core\\Entity\\RevisionableContentEntityBase", "baseFieldDefinitions"),
+            ExtendableContentEntityRelatedClasses(
+                "\\Drupal\\Core\\Entity\\EditorialContentEntityBase",
+                "baseFieldDefinitions"
+            ),
+            ExtendableContentEntityRelatedClasses(
+                "\\Drupal\\Core\\Entity\\RevisionableContentEntityBase",
+                "baseFieldDefinitions"
+            ),
         )
 
         fun getClass(clazz: String) =
@@ -19,6 +31,7 @@ data class ExtendableContentEntityRelatedClasses(val className: String, val meth
         fun hasClass(clazz: String) =
             allPossibleExtendableContentEntityClasses.find { it.className == clazz } != null
 
+        @Suppress("unused")
         fun getAllPossibleExtendableClasses() =
             allPossibleExtendableContentEntityClasses.map { it.className }.toTypedArray()
     }
