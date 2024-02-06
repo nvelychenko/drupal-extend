@@ -1,5 +1,6 @@
 package com.github.nvelychenko.drupalextend.index
 
+import com.github.nvelychenko.drupalextend.index.dataExternalizer.SerializedObjectDataExternalizer
 import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
 import com.github.nvelychenko.drupalextend.index.types.RenderElementType
@@ -14,28 +15,9 @@ import com.jetbrains.php.lang.PhpFileType
 import com.jetbrains.php.lang.lexer.PhpTokenTypes
 import com.jetbrains.php.lang.psi.PhpPsiUtil
 import com.jetbrains.php.lang.psi.elements.*
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import java.io.DataInput
-import java.io.DataOutput
+import kotlinx.serialization.serializer
 
 class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() {
-    private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
-
-    private val myDataExternalizer: DataExternalizer<RenderElementType> =
-        object : DataExternalizer<RenderElementType> {
-            override fun save(out: DataOutput, value: RenderElementType) {
-                out.writeUTF(Json.encodeToString(value))
-            }
-
-            override fun read(input: DataInput): RenderElementType {
-                return Json.decodeFromString<RenderElementType>(input.readUTF())
-            }
-        }
-
-    override fun getName(): ID<String, RenderElementType> {
-        return KEY
-    }
 
     override fun getIndexer(): DataIndexer<String, RenderElementType, FileContent> {
         return DataIndexer { inputData ->
@@ -189,6 +171,14 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
             parameters.add(RenderElementTypeProperty(id, defaultPriority, type, null))
         }
         return parameters.toTypedArray()
+    }
+
+    private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
+
+    private val myDataExternalizer: DataExternalizer<RenderElementType> = SerializedObjectDataExternalizer(serializer<RenderElementType>())
+
+    override fun getName(): ID<String, RenderElementType> {
+        return KEY
     }
 
     override fun getKeyDescriptor(): KeyDescriptor<String> = myKeyDescriptor
