@@ -9,20 +9,20 @@ class FunctionFinderInContext(
     private val stringsToFind: Array<String>,
     private val condition: PsiElementPattern.Capture<PsiElement>
 ) : PsiRecursiveElementWalkingVisitor() {
-    private var stringLitralPsi: Function? = null
+    private var stringLiteralPsi: Function? = null
 
     override fun visitElement(element: PsiElement) {
         if (condition.accepts(element) && element is Function && stringsToFind.contains(element.name)) {
-            stringLitralPsi = element
+            stringLiteralPsi = element
         }
 
-        if (stringLitralPsi == null) {
+        if (stringLiteralPsi == null) {
             super.visitElement(element)
         }
     }
 
     fun findIn(element: PsiElement): Function? {
         element.accept(this)
-        return stringLitralPsi
+        return stringLiteralPsi
     }
 }

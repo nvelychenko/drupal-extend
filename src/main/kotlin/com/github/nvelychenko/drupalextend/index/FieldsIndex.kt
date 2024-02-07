@@ -4,10 +4,13 @@ import com.github.nvelychenko.drupalextend.data.ExtendableContentEntityRelatedCl
 import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
 import com.github.nvelychenko.drupalextend.extensions.isInConfigurationDirectory
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
-import com.github.nvelychenko.drupalextend.extensions.keyPath
+import com.github.nvelychenko.drupalextend.index.dataExternalizer.SerializedObjectDataExternalizer
 import com.github.nvelychenko.drupalextend.index.types.DrupalField
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
+import com.github.nvelychenko.drupalextend.util.yml.StringFinderInContext
+import com.github.nvelychenko.drupalextend.util.yml.YAMLKeyValueFinder
+import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
@@ -20,29 +23,15 @@ import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment
 import com.jetbrains.php.lang.psi.PhpFile
 import com.jetbrains.php.lang.psi.PhpPsiUtil
 import com.jetbrains.php.lang.psi.elements.*
+import kotlinx.serialization.serializer
 import org.jetbrains.yaml.YAMLFileType
-import org.jetbrains.yaml.psi.YAMLDocument
 import org.jetbrains.yaml.psi.YAMLFile
-import org.jetbrains.yaml.psi.YAMLKeyValue
-import java.io.DataInput
-import java.io.DataOutput
 
 class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
     private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
 
     private val myDataExternalizer: DataExternalizer<DrupalField> =
-        object : DataExternalizer<DrupalField> {
-            override fun save(out: DataOutput, value: DrupalField) {
-                out.writeUTF(value.entityType)
-                out.writeUTF(value.fieldType)
-                out.writeUTF(value.fieldName)
-                out.writeUTF(value.path)
-            }
-
-            override fun read(input: DataInput): DrupalField {
-                return DrupalField(input.readUTF(), input.readUTF(), input.readUTF(), input.readUTF())
-            }
-        }
+            SerializedObjectDataExternalizer(serializer<DrupalField>())
 
     override fun getName(): ID<String, DrupalField> {
         return KEY
@@ -79,14 +68,12 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
             return
         }
 
-        PsiTreeUtil.getChildOfType(psiFile, YAMLDocument::class.java)?.topLevelValue?.children?.forEach { node ->
-            if (node is YAMLKeyValue && node.keyText == "type") {
-                val identifier = psiFile.name.substringAfter("field.storage.").replace(".yml", "")
-                val entityType = identifier.substringBeforeLast(".")
-                val fieldName = identifier.substringAfterLast(".")
-                map["${entityType}|${fieldName}"] = DrupalField(entityType, node.valueText, fieldName, node.keyPath)
-            }
-        }
+        val entityType = YAMLKeyValueFinder("entity_type").findIn(psiFile)?.value?.text ?: return
+        val fieldName = YAMLKeyValueFinder("field_name").findIn(psiFile)?.value?.text ?: return
+        val type = YAMLKeyValueFinder("type").findIn(psiFile)?.value?.text?: return
+        val targetType = YAMLKeyValueFinder("settings.target_type").findIn(psiFile)?.value?.text
+
+        map["${entityType}|${fieldName}"] = DrupalField(entityType, type, fieldName, "field_name", targetType)
     }
 
     private fun processPhp(map: HashMap<String, DrupalField>, phpFile: PhpFile) {
@@ -116,7 +103,7 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
                     else -> null
                 }
             }?.forEach {
-                map["${entityTypeId}|${it.key}"] = DrupalField(entityTypeId, it.value, it.key, it.path ?: methName)
+                map["${entityTypeId}|${it.key}"] = DrupalField(entityTypeId, it.value, it.key, it.path ?: methName, it.targetType)
             }
     }
 
@@ -135,12 +122,17 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
 
             val fieldId = hashElement.key?.let { getBaseFieldId(it) } ?: return@forEach
             val fieldType = hashElement.value?.let { getBaseFieldType(it) } ?: return@forEach
+            var targetType: String? = null;
+            if (fieldType == "entity_reference" && hashElement.value != null) {
+                targetType = getBaseFieldReferenceTargetType(hashElement.value!!)
+            }
 
             fieldsDefinitions.add(
                 FieldRepresentation(
                     fieldId,
                     fieldType,
-                    null
+                    null,
+                    targetType
                 ),
             )
         }
@@ -164,12 +156,17 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
             val fieldType = getBaseFieldType(assignment) ?: return@forEach
             val index = (assignment.variable as? ArrayAccessExpression)?.index ?: return@forEach
             val fieldId = index.value?.let { getBaseFieldId(it) } ?: return@forEach
+            var targetType: String? = null;
+            if (fieldType == "entity_reference" && assignment.value != null) {
+                targetType = getBaseFieldReferenceTargetType(assignment.value!!)
+            }
 
             fieldsDefinitions.add(
                 FieldRepresentation(
                     fieldId,
                     fieldType,
-                    method.name
+                    method.name,
+                    targetType
                 ),
             )
             return@forEach
@@ -239,6 +236,17 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
             ?.replace("'", "")
     }
 
+    private fun getBaseFieldReferenceTargetType(assignment: PhpPsiElement): String? {
+        val stringFinder = StringFinderInContext("target_type", PlatformPatterns.psiElement(StringLiteralExpression::class.java))
+        val stringLiteral = stringFinder.findIn(assignment) ?: return null
+        val targetType = when (val parent = stringLiteral.parent.parent) {
+            is MethodReference -> stringLiteral.nextPsiSibling
+            is ArrayHashElement -> parent.value
+            else -> return null
+        }
+        return (targetType as? StringLiteralExpression)?.contents
+    }
+
     private fun isValidPhpClass(phpClass: PhpClass): Boolean {
         if (phpClass.isInterface) {
             return false
@@ -290,6 +298,6 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
         const val GENERAL_BASE_FIELD_KEY_PREFIX = "KEY|"
     }
 
-    private data class FieldRepresentation(val key: String, val value: String, val path: String?)
+    private data class FieldRepresentation(val key: String, val value: String, val path: String?, val targetType: String? = null)
 
 }
