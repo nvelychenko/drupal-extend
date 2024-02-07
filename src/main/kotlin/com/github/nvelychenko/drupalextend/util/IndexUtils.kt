@@ -11,6 +11,7 @@ fun clearPluginIndexes() {
         FieldsIndex.KEY,
         FieldTypeIndex.KEY,
         RenderElementIndex.KEY,
-        ThemeIndex.KEY
+        ThemeIndex.KEY,
+        LibrariesIndex.KEY,
     ).forEach { FileBasedIndex.getInstance().requestRebuild(it) }
 }

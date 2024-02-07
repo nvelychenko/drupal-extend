@@ -31,6 +31,7 @@
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.RenderElementIndex"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.LibrariesIndex"/>
 
         <psi.referenceContributor
                 implementation="com.github.nvelychenko.drupalextend.reference.DrupalReferenceContributor"

@@ -127,6 +127,8 @@ object Patterns {
     }
 
     /**
+     * @sample
+     *
      * ['value']
      *     ↑
      *
@@ -142,10 +144,94 @@ object Patterns {
      */
     val STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE: Capture<LeafPsiElement> by lazy {
         psiElement(LeafPsiElement::class.java)
-            .withParent(
-                STRING_LITERAL_IN_ARRAY_KEY_OR_ONLY_VALUE
-            )
+            .withParent(STRING_LITERAL_IN_ARRAY_KEY_OR_ONLY_VALUE)
             .withLanguage(phpLanguage)
+    }
+
+    /**
+     * @sample
+     *
+     * $build['#attached']['library'][] = 'here';
+     */
+    val TRIPLE_ARRAY_WITH_STRING_VALUE: Capture<StringLiteralExpression> by lazy {
+        psiElement(StringLiteralExpression::class.java)
+            .withParent(
+                psiElement(PhpElementTypes.ASSIGNMENT_EXPRESSION)
+                    .withChild(
+                        psiElement(PhpElementTypes.ARRAY_ACCESS_EXPRESSION)
+                            .withChild(
+                                psiElement(PhpElementTypes.ARRAY_ACCESS_EXPRESSION)
+                                    .withChild(
+                                        psiElement(PhpElementTypes.ARRAY_ACCESS_EXPRESSION)
+                                            .withChild(psiElement(PhpElementTypes.VARIABLE))
+                                    )
+                            )
+                    )
+            ).withLanguage(phpLanguage)
+    }
+
+    /**
+     * @sample
+     *
+     * $build['#attached'] = [
+     *   'library' => [
+     *     'here',
+     *        ↑
+     *   ],
+     * ];
+     */
+    val TRIPLE_NESTED_STRING_ARRAY_VALUE: Capture<StringLiteralExpression> by lazy {
+        psiElement(StringLiteralExpression::class.java)
+            .withParent(
+                psiElement(PhpElementTypes.ARRAY_VALUE)
+                    .withParent(
+                        psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)
+                            .withParent(
+                                psiElement(PhpElementTypes.ARRAY_VALUE)
+                                    .withParent(
+                                        psiElement(PhpElementTypes.HASH_ARRAY_ELEMENT)
+                                            .withParent(
+                                                psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)
+                                                    .withParent(psiElement(PhpElementTypes.ASSIGNMENT_EXPRESSION))
+                                            )
+                                    )
+                            )
+                    )
+            ).withLanguage(phpLanguage)
+    }
+
+    /**
+     * @sample
+     *
+     * $build = [
+     *   '#attached' => [
+     *     'library' => [
+     *       '',
+     *     ],
+     *   ],
+     * ];
+     */
+    val TRIPLE_SIMPLE_STRING_ARRAY_VALUE: Capture<StringLiteralExpression> by lazy {
+        psiElement(StringLiteralExpression::class.java)
+            .withParent(
+                psiElement(PhpElementTypes.ARRAY_VALUE)
+                    .withParent(
+                        psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)
+                            .withParent(
+                                psiElement(PhpElementTypes.ARRAY_VALUE)
+                                    .withParent(
+                                        psiElement(PhpElementTypes.HASH_ARRAY_ELEMENT)
+                                            .withParent(
+                                                psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)
+                                                    .withParent(
+                                                        psiElement(PhpElementTypes.ARRAY_VALUE)
+                                                            .withParent(psiElement(PhpElementTypes.HASH_ARRAY_ELEMENT))
+                                                    )
+                                            )
+                                    )
+                            )
+                    )
+            ).withLanguage(phpLanguage)
     }
 
     private val STRING_LITERAL_IN_ARRAY_KEY_OR_ONLY_VALUE: Capture<StringLiteralExpression> by lazy {
