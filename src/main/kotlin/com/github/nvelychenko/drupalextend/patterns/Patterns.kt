@@ -67,6 +67,17 @@ object Patterns {
             .withLanguage(phpLanguage)
     }
 
+    val ARRAY_KEY_WITH_ARRAY_CREATION_EXPRESSION: Capture<StringLiteralExpression> by lazy {
+        psiElement(StringLiteralExpression::class.java)
+            .withParent(
+                psiElement(PhpElementTypes.ARRAY_KEY)
+                    .withParent(
+                        psiElement(PhpElementTypes.HASH_ARRAY_ELEMENT)
+                            .withChild(psiElement(PhpElementTypes.ARRAY_VALUE).withChild(psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)))
+                    )
+            )
+    }
+
     /**
      * ['string' => 'string']
      *                  ↑
@@ -111,22 +122,27 @@ object Patterns {
     val STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE: Capture<LeafPsiElement> by lazy {
         psiElement(LeafPsiElement::class.java)
             .withParent(
-                psiElement(StringLiteralExpression::class.java)
-                    .withParent(
-                        or(
-                            psiElement(PhpElementTypes.ARRAY_KEY)
-                                .withParent(
-                                    or(
-                                        psiElement(PhpElementTypes.HASH_ARRAY_ELEMENT)
-                                            .withParent(psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)),
-                                        psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)
-                                    )
-                                ),
-                            psiElement(PhpElementTypes.ARRAY_VALUE)
-                                .withParent(psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION))
-                        )
-                    )
+                STRING_LITERAL_IN_ARRAY_KEY_OR_ONLY_VALUE
             )
+    }
+
+    private val STRING_LITERAL_IN_ARRAY_KEY_OR_ONLY_VALUE: Capture<StringLiteralExpression> by lazy {
+        psiElement(StringLiteralExpression::class.java)
+            .withParent(
+                or(
+                    psiElement(PhpElementTypes.ARRAY_KEY)
+                        .withParent(
+                            or(
+                                psiElement(PhpElementTypes.HASH_ARRAY_ELEMENT)
+                                    .withParent(psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)),
+                                psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)
+                            )
+                        ),
+                    psiElement(PhpElementTypes.ARRAY_VALUE)
+                        .withParent(psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION))
+                )
+            )
+
     }
 
 }

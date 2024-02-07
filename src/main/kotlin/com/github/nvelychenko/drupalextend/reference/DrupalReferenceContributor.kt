@@ -4,7 +4,8 @@ import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_INSIDE_METHO
 import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_IN_SIMPLE_ARRAY_VALUE
 import com.github.nvelychenko.drupalextend.reference.referenceProvider.EntityStorageReferenceProvider
 import com.github.nvelychenko.drupalextend.reference.referenceProvider.FieldReferenceProvider
-import com.github.nvelychenko.drupalextend.reference.referenceProvider.RenderElementTypeProvider
+import com.github.nvelychenko.drupalextend.reference.referenceProvider.RenderElementTypeReferenceProvider
+import com.github.nvelychenko.drupalextend.reference.referenceProvider.ThemeReferenceProvider
 import com.intellij.psi.PsiReferenceContributor
 import com.intellij.psi.PsiReferenceRegistrar
 
@@ -20,6 +21,8 @@ class DrupalReferenceContributor : PsiReferenceContributor() {
 
         // ['#type' => 'checkbox']
         //                 ↑
-        registrar.registerReferenceProvider(STRING_IN_SIMPLE_ARRAY_VALUE, RenderElementTypeProvider())
+        registrar.registerReferenceProvider(STRING_IN_SIMPLE_ARRAY_VALUE, RenderElementTypeReferenceProvider())
+
+        registrar.registerReferenceProvider(STRING_IN_SIMPLE_ARRAY_VALUE, ThemeReferenceProvider())
     }
 }

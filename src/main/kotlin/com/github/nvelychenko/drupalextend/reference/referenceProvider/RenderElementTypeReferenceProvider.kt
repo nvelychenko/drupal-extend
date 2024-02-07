@@ -14,7 +14,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.lang.psi.elements.ArrayHashElement
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
-class RenderElementTypeProvider : PsiReferenceProvider() {
+class RenderElementTypeReferenceProvider : PsiReferenceProvider() {
     /**
      * Find ['#type' => 'container']
      */
