@@ -2,7 +2,7 @@ package com.github.nvelychenko.drupalextend.reference.referenceProvider
 
 import com.github.nvelychenko.drupalextend.extensions.getThemeOrRenderElementValue
 import com.github.nvelychenko.drupalextend.extensions.getValue
-import com.github.nvelychenko.drupalextend.extensions.hasDrupalTheme
+import com.github.nvelychenko.drupalextend.extensions.hasDrupalRenderElement
 import com.github.nvelychenko.drupalextend.index.RenderElementIndex
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.reference.referenceType.RenderElementReference
@@ -23,7 +23,7 @@ class RenderElementTypeReferenceProvider : PsiReferenceProvider() {
 
         element as StringLiteralExpression
 
-        if (!element.hasDrupalTheme()) return emptyArray()
+        if (!element.hasDrupalRenderElement()) return emptyArray()
 
         val value = element.getThemeOrRenderElementValue() ?: return emptyArray()
 
