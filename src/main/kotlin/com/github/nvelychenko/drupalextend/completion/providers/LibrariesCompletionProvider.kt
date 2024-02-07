@@ -30,16 +30,19 @@ class LibrariesCompletionProvider : CompletionProvider<CompletionParameters>() {
 
         val containString = leaf.parent as StringLiteralExpression
 
-        when {
+        val shouldEnableAutocomplete = when {
             TRIPLE_NESTED_STRING_ARRAY_VALUE.accepts(containString) -> isTripleNestedArrayAttachedLibrary(containString)
             TRIPLE_SIMPLE_STRING_ARRAY_VALUE.accepts(containString) -> isTripleSimpleAttachedLibrary(containString)
             TRIPLE_ARRAY_WITH_STRING_VALUE.accepts(containString) -> isTripleArrayAttachedLibrary(containString)
+            else -> return
         }
 
-        FileBasedIndex.getInstance()
-            .getAllKeys(LibrariesIndex.KEY, project)
-            .mapNotNull(::create)
-            .forEach { result.addElement(it) }
+        if (shouldEnableAutocomplete) {
+            FileBasedIndex.getInstance()
+                .getAllKeys(LibrariesIndex.KEY, project)
+                .mapNotNull(::create)
+                .forEach { result.addElement(it) }
+        }
     }
 
     private fun isTripleNestedArrayAttachedLibrary(containString: StringLiteralExpression): Boolean {
