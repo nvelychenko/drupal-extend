@@ -10,6 +10,7 @@ import com.github.nvelychenko.drupalextend.index.FieldsIndex
 import com.github.nvelychenko.drupalextend.index.FieldsIndex.Companion.GENERAL_BASE_FIELD_KEY_PREFIX
 import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
+import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider.Util.SPLIT_KEY
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -72,6 +73,19 @@ open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() 
         isArrayAccessExpression: Boolean = false
     ) {
         val project = classReference.project
+
+        // ECK Require special handing.
+        val signature = classReference.signature
+        if (signature.contains(SPLIT_KEY)) {
+            val entityTypeId = signature.substringAfter(SPLIT_KEY).substringBefore('.')
+            val contentEntity = fileBasedIndex.getValue(ContentEntityIndex.KEY, entityTypeId, project) ?: return
+
+            if (contentEntity.isEck) {
+                buildResultForEntity(contentEntity, project, result)
+                return
+            }
+        }
+
 
         val globalTypes = classReference.globalType.types.map {
             // Situation is following, there is array of nodes. Node[]

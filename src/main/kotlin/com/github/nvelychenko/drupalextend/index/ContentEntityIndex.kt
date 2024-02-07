@@ -4,6 +4,7 @@ import com.github.nvelychenko.drupalextend.extensions.getModificationTrackerForI
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.extensions.isInConfigurationDirectory
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
+import com.github.nvelychenko.drupalextend.index.dataExternalizer.SerializedObjectDataExternalizer
 import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
@@ -19,48 +20,14 @@ import com.jetbrains.php.lang.PhpFileType
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment
 import com.jetbrains.php.lang.psi.PhpFile
 import com.jetbrains.php.lang.psi.elements.PhpClass
+import kotlinx.serialization.serializer
 import org.jetbrains.yaml.YAMLFileType
 import org.jetbrains.yaml.psi.YAMLDocument
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLKeyValue
-import java.io.DataInput
-import java.io.DataOutput
 
 class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>() {
     private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
-
-    private val myDataExternalizer: DataExternalizer<DrupalContentEntity> =
-        object : DataExternalizer<DrupalContentEntity> {
-            override fun save(out: DataOutput, value: DrupalContentEntity) {
-                out.writeUTF(value.entityTypeId)
-                out.writeUTF(value.fqn)
-                out.writeInt(value.keys.size)
-                for (key in value.keys) {
-                    out.writeUTF(key.key)
-                    out.writeUTF(key.value)
-                }
-
-                out.writeUTF(value.storageHandler)
-            }
-
-            override fun read(input: DataInput): DrupalContentEntity {
-                val entityType = input.readUTF()
-                val fqn = input.readUTF()
-
-                val keys = hashMapOf<String, String>()
-                for (i in 1..input.readInt()) {
-                    keys[input.readUTF()] = input.readUTF()
-                }
-
-                val sqlStorageHandler = input.readUTF()
-
-                return DrupalContentEntity(entityType, fqn, keys, sqlStorageHandler)
-            }
-        }
-
-    override fun getName(): ID<String, DrupalContentEntity> {
-        return KEY
-    }
 
     override fun getIndexer(): DataIndexer<String, DrupalContentEntity, FileContent> {
         return DataIndexer { inputData ->
@@ -98,7 +65,8 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
                     node.valueText,
                     "\\Drupal\\eck\\Entity\\EckEntity",
                     hashMapOf(),
-                    "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage"
+                    "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage",
+                    true,
                 )
             }
         }
@@ -148,6 +116,13 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
 
     override fun getKeyDescriptor(): KeyDescriptor<String> = myKeyDescriptor
 
+    private val myDataExternalizer: DataExternalizer<DrupalContentEntity> =
+        SerializedObjectDataExternalizer(serializer<DrupalContentEntity>())
+
+    override fun getName(): ID<String, DrupalContentEntity> {
+        return KEY
+    }
+
     override fun getValueExternalizer(): DataExternalizer<DrupalContentEntity> = myDataExternalizer
 
     override fun getInputFilter(): FileBasedIndex.InputFilter {
@@ -156,7 +131,7 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 12
+    override fun getVersion(): Int = 13
 
     companion object {
         val KEY = ID.create<String, DrupalContentEntity>("com.github.nvelychenko.drupalextend.index.content_types")
