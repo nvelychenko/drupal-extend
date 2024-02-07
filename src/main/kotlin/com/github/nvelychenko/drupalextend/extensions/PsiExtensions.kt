@@ -2,12 +2,11 @@ package com.github.nvelychenko.drupalextend.extensions
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.php.PhpClassHierarchyUtils
 import com.jetbrains.php.lang.PhpLangUtil
-import com.jetbrains.php.lang.psi.elements.ArrayHashElement
-import com.jetbrains.php.lang.psi.elements.PhpClass
-import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
-import com.jetbrains.php.lang.psi.elements.Variable
+import com.jetbrains.php.lang.psi.elements.*
 
 fun PsiElement.findVariablesByName(variableName: String): Array<Variable> {
     val variables = mutableListOf<Variable>()
@@ -46,16 +45,48 @@ fun PhpClass.isSuperInterfacesOf(interfaces: Array<PhpClass>): Boolean {
     return isInstanceOf
 }
 
-fun ArrayHashElement.containsTheme(): Boolean {
-    val key = this.key as? StringLiteralExpression ?: return false
-    val value = this.value as? StringLiteralExpression ?: return false
-
-    return key.contents == "#theme" && value.contents.isNotEmpty()
+fun LeafPsiElement.hasDrupalTheme(): Boolean {
+    return (parent as? StringLiteralExpression)?.hasDrupalTheme() ?: false
 }
 
-fun ArrayHashElement.containsRenderElement(): Boolean {
-    val key = this.key as? StringLiteralExpression ?: return false
-    val value = this.value as? StringLiteralExpression ?: return false
+fun LeafPsiElement.hasDrupalRenderElement(): Boolean {
+    return (parent as? StringLiteralExpression)?.hasDrupalRenderElement() ?: false
+}
 
-    return key.contents == "#type" && value.contents.isNotEmpty()
+fun StringLiteralExpression.hasDrupalTheme(): Boolean {
+    return "#theme" == getThemeOrRenderElementKey()?.contents
+}
+
+fun StringLiteralExpression.hasDrupalRenderElement(): Boolean {
+    return "#type" == getThemeOrRenderElementKey()?.contents
+}
+
+fun StringLiteralExpression.getThemeOrRenderElementKey(): StringLiteralExpression? {
+    return when (val subParent = parent) {
+        is AssignmentExpression -> {
+            (subParent.variable as ArrayAccessExpression).index?.value as? StringLiteralExpression ?: return null
+        }
+
+        is PhpPsiElement -> {
+            val arrayHash = PsiTreeUtil.getParentOfType(subParent, ArrayHashElement::class.java) ?: return null
+            arrayHash.key as StringLiteralExpression
+        }
+
+        else -> return null
+    }
+}
+
+fun StringLiteralExpression.getThemeOrRenderElementValue(): StringLiteralExpression? {
+    return when (val subParent = parent) {
+        is AssignmentExpression -> {
+            subParent.value as? StringLiteralExpression
+        }
+
+        is PhpPsiElement -> {
+            val arrayHash = PsiTreeUtil.getParentOfType(subParent, ArrayHashElement::class.java) ?: return null
+            arrayHash.value as? StringLiteralExpression
+        }
+
+        else -> return null
+    }
 }

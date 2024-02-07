@@ -14,7 +14,10 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.PhpClassHierarchyUtils
 import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.lexer.PhpTokenTypes
-import com.jetbrains.php.lang.psi.elements.*
+import com.jetbrains.php.lang.psi.elements.ArrayAccessExpression
+import com.jetbrains.php.lang.psi.elements.FieldReference
+import com.jetbrains.php.lang.psi.elements.MethodReference
+import com.jetbrains.php.lang.psi.elements.Variable
 
 /**
  * Provides autocompletion for field properties.
@@ -55,6 +58,7 @@ open class FieldPropertyCompletionProvider : CompletionProvider<CompletionParame
                 "first" -> classReference.classReference
                 else -> return
             }
+
             is Variable -> classReference
 
             is ArrayAccessExpression -> classReference.children.firstOrNull()
@@ -81,7 +85,7 @@ open class FieldPropertyCompletionProvider : CompletionProvider<CompletionParame
 
 
         val fieldClassInstance =
-                PhpIndex.getInstance(project).getClassesByFQN(fieldType.fqn).firstOrNull() ?: return
+            PhpIndex.getInstance(project).getClassesByFQN(fieldType.fqn).firstOrNull() ?: return
         PhpClassHierarchyUtils.processSuperClasses(fieldClassInstance, false, true) {
             it.findOwnMethodByName("propertyDefinitions") ?: return@processSuperClasses true
             val superProperties = fileBasedIndex.getValue(FieldTypeIndex.KEY, it.fqn, project)
@@ -91,10 +95,10 @@ open class FieldPropertyCompletionProvider : CompletionProvider<CompletionParame
 
         properties.forEach {
             completionResultSet.addElement(
-                    PrioritizedLookupElement.withPriority(
-                            LookupElementBuilder.create(it.key).withTypeText(it.value).withBoldness(true),
-                            100.0,
-                    ),
+                PrioritizedLookupElement.withPriority(
+                    LookupElementBuilder.create(it.key).withTypeText(it.value).withBoldness(true),
+                    100.0,
+                ),
             )
         }
     }

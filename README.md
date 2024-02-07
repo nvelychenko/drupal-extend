@@ -25,17 +25,15 @@ The plugin is enhancement for your Drupal development experience.
 
 * TypeProvider for `\Drupal::service('database')->|`. So ide know what object is returned by this `::service` method.
 
-* WIP Autocomplete for `#theme`
+* Autocomplete for `#theme`
+
+* Reference for themes (Ctrl + click)
 
 * Autocomplete for Render Element and its properties e.g. `#type' => 'checkbox', '#tit|`
 
-* Render element type highlight (Annotator)
+* Render element type and theme highlight (Annotator)
 
 * Fields autocomplete in content entity queries and entity storages autocomplete in `\Drupal::entityQuery()`
-
-* (Optional) Line marker for render elements. It is disabled by default to enable it go to <kbd>Settings</kbd> -> <kbd>Editor</kbd> -> <kbd>Gutter Icons</kbd> -> <kbd>Render Element Type</kbd>
-
-![Render Element line marker example](./assets/line_marker_example.png)
 
 ## Installation
 

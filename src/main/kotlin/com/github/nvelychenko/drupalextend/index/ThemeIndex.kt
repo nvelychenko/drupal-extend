@@ -1,11 +1,12 @@
 package com.github.nvelychenko.drupalextend.index
 
-import com.github.nvelychenko.drupalextend.index.dataExternalizer.SerializedObjectDataExternalizer
 import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
+import com.github.nvelychenko.drupalextend.index.dataExternalizer.SerializedObjectDataExternalizer
 import com.github.nvelychenko.drupalextend.index.types.DrupalTheme
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.github.nvelychenko.drupalextend.patterns.Patterns.SIMPLE_FUNCTION
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
+import com.github.nvelychenko.drupalextend.util.yml.FunctionFinderInContext
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
@@ -19,13 +20,14 @@ import kotlinx.serialization.serializer
 
 class ThemeIndex : FileBasedIndexExtension<String, DrupalTheme>() {
 
+    private lateinit var hookName: String
+
     override fun getIndexer(): DataIndexer<String, DrupalTheme, FileContent> {
         return DataIndexer { inputData ->
             val map = hashMapOf<String, DrupalTheme>()
 
-            if (!inputData.isValidForIndex()) {
-                return@DataIndexer map
-            }
+            if (!inputData.project.drupalExtendSettings.isEnabled) return@DataIndexer map
+            if (!inputData.isValidForIndex()) return@DataIndexer map
 
             val fileName = inputData.fileName
             val moduleName = fileName.substringBefore(".")
@@ -33,7 +35,10 @@ class ThemeIndex : FileBasedIndexExtension<String, DrupalTheme>() {
                 return@DataIndexer map
             }
 
-            val themeHook = getThemeHook(inputData, moduleName) ?: return@DataIndexer map
+            val finder = FunctionFinderInContext(arrayOf(moduleName + "_theme", "drupal_common_theme"), SIMPLE_FUNCTION)
+            val themeHook = finder.findIn(inputData.psiFile) ?: return@DataIndexer map
+            hookName = themeHook.name
+
             when (val returnType = PsiTreeUtil.findChildOfType(themeHook, PhpReturn::class.java)?.firstPsiChild) {
                 is ArrayCreationExpression -> processArrayCreationExpression(returnType, map)
                 is Variable -> processVariable(returnType, themeHook, map)
@@ -59,9 +64,10 @@ class ThemeIndex : FileBasedIndexExtension<String, DrupalTheme>() {
             val propertiesHash = assignment.variable as? ArrayCreationExpression ?: continue
 
             // $theme['foo']
-            val themeName = ((assignment.value as? ArrayAccessExpression)?.index as? StringLiteralExpression)?.contents ?: continue
+            val themeName =
+                ((assignment.value as? ArrayAccessExpression)?.index as? StringLiteralExpression)?.contents ?: continue
 
-            map[themeName] = DrupalTheme(themeName, getThemeVariables(propertiesHash))
+            map[themeName] = DrupalTheme(themeName, getThemeVariables(propertiesHash), hookName)
         }
     }
 
@@ -71,7 +77,7 @@ class ThemeIndex : FileBasedIndexExtension<String, DrupalTheme>() {
             val themeNamePsi = topHash.key
             if (themeNamePsi !is StringLiteralExpression || themeNamePsi.contents.isEmpty() || propertiesHash !is ArrayCreationExpression) continue
 
-            map[themeNamePsi.contents] = DrupalTheme(themeNamePsi.contents, getThemeVariables(propertiesHash))
+            map[themeNamePsi.contents] = DrupalTheme(themeNamePsi.contents, getThemeVariables(propertiesHash), hookName)
 
         }
     }
@@ -93,22 +99,6 @@ class ThemeIndex : FileBasedIndexExtension<String, DrupalTheme>() {
         }
 
         return emptyArray()
-    }
-
-    private fun getThemeHook(inputData: FileContent, moduleName: String): Function? {
-        var themeHook: Function? = null
-        val allowedHookNames = arrayOf(moduleName + "_theme", "drupal_common_theme")
-        inputData.psiFile.accept(object : PsiRecursiveElementWalkingVisitor() {
-            override fun visitElement(element: PsiElement) {
-                if (element is Function && (allowedHookNames.contains(element.name))) {
-                    themeHook = element
-                }
-
-                super.visitElement(element)
-            }
-        })
-
-        return themeHook
     }
 
     private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()

@@ -4,13 +4,13 @@ import kotlinx.serialization.Serializable
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
 @Serializable
-data class DrupalTheme(val themeName: String, val variables: Array<String>) {
+data class DrupalTheme(val themeName: String, val variables: Array<String>, val hookName: String) {
     override fun equals(other: Any?): Boolean {
         return if (this === other) {
             true
         } else if (other != null && this.javaClass == other.javaClass) {
             val data = other as DrupalTheme
-            this.themeName == data.themeName && this.variables.contentEquals(data.variables)
+            this.themeName == data.themeName && this.variables.contentEquals(data.variables) && this.hookName == other.hookName
         } else {
             false
         }
@@ -20,6 +20,7 @@ data class DrupalTheme(val themeName: String, val variables: Array<String>) {
         return HashCodeBuilder()
             .append(this.themeName)
             .append(this.variables)
+            .append(this.hookName)
             .hashCode()
 
     }

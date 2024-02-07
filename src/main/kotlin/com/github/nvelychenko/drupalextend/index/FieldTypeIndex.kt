@@ -169,6 +169,7 @@ class FieldTypeIndex : FileBasedIndexExtension<String, DrupalFieldType>() {
 
         val KEY = ID.create<String, DrupalFieldType>("com.github.nvelychenko.drupalextend.index.field_type")
         const val DUMMY_LIST_CLASS = "Dummy"
+
         @Synchronized
         fun getAllFqns(project: Project): HashMap<String, DrupalFieldType> {
             return CachedValuesManager.getManager(project).getCachedValue(project) {

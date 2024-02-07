@@ -27,7 +27,8 @@ class BasicThemeOrTypeProvider : CompletionProvider<CompletionParameters>() {
         val array = PsiTreeUtil.getParentOfType(leaf, ArrayCreationExpression::class.java)!!
 
         val themeOrType = arrayOf("#theme", "#type")
-        val hasThemeOrType = array.hashElements.find { themeOrType.contains((it.key as? StringLiteralExpression)?.contents) }
+        val hasThemeOrType =
+            array.hashElements.find { themeOrType.contains((it.key as? StringLiteralExpression)?.contents) }
 
         if (hasThemeOrType != null) return
 

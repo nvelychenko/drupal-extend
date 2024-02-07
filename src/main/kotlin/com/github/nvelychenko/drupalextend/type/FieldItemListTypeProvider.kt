@@ -88,11 +88,14 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
         val (signatures, fieldName) = expression.substring(2).split(endKey)
 
         val entityTypes = mutableListOf<String>()
-        if (signatures.contains("#" + EntityFromStorageTypeProvider.KEY) && signatures.contains(EntityFromStorageTypeProvider.SPLIT_KEY)) {
-            val entityTypeId = signatures.substringAfter(EntityFromStorageTypeProvider.KEY).substringBefore(EntityFromStorageTypeProvider.SPLIT_KEY)
+        if (signatures.contains("#" + EntityFromStorageTypeProvider.KEY) && signatures.contains(
+                EntityFromStorageTypeProvider.SPLIT_KEY
+            )
+        ) {
+            val entityTypeId = signatures.substringAfter(EntityFromStorageTypeProvider.KEY)
+                .substringBefore(EntityFromStorageTypeProvider.SPLIT_KEY)
             entityTypes.add(entityTypeId)
-        }
-        else {
+        } else {
             val objects = mutableListOf<PhpNamedElement>()
 
             val index = PhpIndex.getInstance(project)
@@ -100,8 +103,7 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
             for (signature in signatures.split('|')) {
                 if (signature.startsWith('#')) {
                     objects.addAll(index.getBySignature(signature))
-                }
-                else {
+                } else {
                     objects.addAll(index.getAnyByFQN(signature))
                 }
             }
@@ -111,7 +113,7 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
                 if (clazz !is PhpClass) continue
 
                 val entity = FileBasedIndex.getInstance().getValue(ContentEntityFqnIndex.KEY, clazz.fqn, project)
-                        ?: continue
+                    ?: continue
 
                 val entityTypeId = entity.entityTypeId
                 entityTypes.add(entityTypeId)
@@ -125,11 +127,13 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
 
             val fieldType = fileBasedIndex.getValue(FieldTypeIndex.KEY, field.fieldType, project) ?: return null
 
-            type.add(if (fieldType.listClassFqn != FieldTypeIndex.DUMMY_LIST_CLASS) {
-                fieldType.listClassFqn
-            } else {
-                "\\Drupal\\Core\\Field\\FieldItemList"
-            })
+            type.add(
+                if (fieldType.listClassFqn != FieldTypeIndex.DUMMY_LIST_CLASS) {
+                    fieldType.listClassFqn
+                } else {
+                    "\\Drupal\\Core\\Field\\FieldItemList"
+                }
+            )
 
             type.add("${fieldType.fqn}[]")
         }

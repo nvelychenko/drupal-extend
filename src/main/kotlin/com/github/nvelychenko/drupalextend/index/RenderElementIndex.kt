@@ -1,8 +1,8 @@
 package com.github.nvelychenko.drupalextend.index
 
-import com.github.nvelychenko.drupalextend.index.dataExternalizer.SerializedObjectDataExternalizer
 import com.github.nvelychenko.drupalextend.extensions.findVariablesByName
 import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
+import com.github.nvelychenko.drupalextend.index.dataExternalizer.SerializedObjectDataExternalizer
 import com.github.nvelychenko.drupalextend.index.types.RenderElementType
 import com.github.nvelychenko.drupalextend.index.types.RenderElementType.RenderElementTypeProperty
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
@@ -175,7 +175,8 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
 
     private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
 
-    private val myDataExternalizer: DataExternalizer<RenderElementType> = SerializedObjectDataExternalizer(serializer<RenderElementType>())
+    private val myDataExternalizer: DataExternalizer<RenderElementType> =
+        SerializedObjectDataExternalizer(serializer<RenderElementType>())
 
     override fun getName(): ID<String, RenderElementType> {
         return KEY

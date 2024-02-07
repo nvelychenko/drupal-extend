@@ -76,7 +76,10 @@ object Patterns {
                             .withChild(psiElement(PhpElementTypes.ARRAY_VALUE).withChild(psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)))
                     )
             )
+            .withLanguage(phpLanguage)
     }
+
+    val SIMPLE_FUNCTION: Capture<PsiElement> by lazy { psiElement(PhpElementTypes.FUNCTION).withLanguage(phpLanguage) }
 
     /**
      * ['string' => 'string']
@@ -97,11 +100,29 @@ object Patterns {
             .withLanguage(phpLanguage)
     }
 
+    /**
+     * $array['#theme'] = 'kek'
+     *                      ↑
+     */
+    val SIMPLE_ARRAY_VALUE_ASSIGNMENT: Capture<StringLiteralExpression> by lazy {
+        psiElement(StringLiteralExpression::class.java)
+            .withParent(
+                psiElement(PhpElementTypes.ASSIGNMENT_EXPRESSION)
+                    .withChild(
+                        psiElement(PhpElementTypes.ARRAY_ACCESS_EXPRESSION)
+                            .withChild(
+                                psiElement(PhpElementTypes.ARRAY_INDEX)
+                                    .withChild(psiElement(StringLiteralExpression::class.java))
+                            )
+                    )
+            )
+            .withLanguage(phpLanguage)
+    }
+
     val LEAF_STRING_IN_SIMPLE_ARRAY_VALUE by lazy {
         or(
-            psiElement(PhpTokenTypes.STRING_LITERAL).withParent(STRING_IN_SIMPLE_ARRAY_VALUE).withLanguage(phpLanguage),
-            psiElement(PhpTokenTypes.STRING_LITERAL_SINGLE_QUOTE).withParent(STRING_IN_SIMPLE_ARRAY_VALUE)
-                .withLanguage(phpLanguage)
+            psiElement(LeafPsiElement::class.java).withParent(STRING_IN_SIMPLE_ARRAY_VALUE).withLanguage(phpLanguage),
+            psiElement(LeafPsiElement::class.java).withParent(SIMPLE_ARRAY_VALUE_ASSIGNMENT).withLanguage(phpLanguage),
         )
     }
 
@@ -124,6 +145,7 @@ object Patterns {
             .withParent(
                 STRING_LITERAL_IN_ARRAY_KEY_OR_ONLY_VALUE
             )
+            .withLanguage(phpLanguage)
     }
 
     private val STRING_LITERAL_IN_ARRAY_KEY_OR_ONLY_VALUE: Capture<StringLiteralExpression> by lazy {
@@ -142,6 +164,7 @@ object Patterns {
                         .withParent(psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION))
                 )
             )
+            .withLanguage(phpLanguage)
 
     }
 
