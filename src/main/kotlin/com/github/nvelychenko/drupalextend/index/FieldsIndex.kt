@@ -122,7 +122,7 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
 
             val fieldId = hashElement.key?.let { getBaseFieldId(it) } ?: return@forEach
             val fieldType = hashElement.value?.let { getBaseFieldType(it) } ?: return@forEach
-            var targetType: String? = null;
+            var targetType: String? = null
             if (fieldType == "entity_reference" && hashElement.value != null) {
                 targetType = getBaseFieldReferenceTargetType(hashElement.value!!)
             }
@@ -156,7 +156,7 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
             val fieldType = getBaseFieldType(assignment) ?: return@forEach
             val index = (assignment.variable as? ArrayAccessExpression)?.index ?: return@forEach
             val fieldId = index.value?.let { getBaseFieldId(it) } ?: return@forEach
-            var targetType: String? = null;
+            var targetType: String? = null
             if (fieldType == "entity_reference" && assignment.value != null) {
                 targetType = getBaseFieldReferenceTargetType(assignment.value!!)
             }
