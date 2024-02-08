@@ -26,10 +26,9 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
         FileBasedIndex.getInstance()
     }
 
-    private val endKey = '\u3339'
 
     override fun getKey(): Char {
-        return '\u3338'
+        return KEY
     }
 
     override fun getType(psiElement: PsiElement): PhpType? {
@@ -52,10 +51,13 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
             is FieldReference -> psiElement.classReference
             else -> return null
         }
-        if (classReference !is Variable) return null
 
-        val variableSignature = classReference.type.toString()
-        return PhpType().add("#$key$variableSignature$endKey$name")
+        val parentSignature = when (classReference) {
+            is Variable -> classReference.type
+            is MethodReference -> classReference.type
+            else -> return null
+        }.toString()
+        return PhpType().add("#$key$parentSignature$END_KEY$name")
     }
 
     private fun getSignature(psiElement: PsiElement): Array<String>? {
@@ -84,8 +86,8 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
 
 
     override fun complete(expression: String, project: Project): PhpType? {
-        if (!expression.contains(endKey)) return null
-        val (signatures, fieldName) = expression.substring(2).split(endKey)
+        if (!expression.contains(END_KEY)) return null
+        val (signatures, fieldName) = expression.substring(2).split(END_KEY)
 
         val entityTypes = mutableListOf<String>()
         if (signatures.contains("#" + EntityFromStorageTypeProvider.KEY) && signatures.contains(
@@ -150,5 +152,9 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
         return emptyList()
     }
 
+    companion object {
+        const val END_KEY = '\u3339'
+        const val KEY = '\u3338'
+    }
 
 }
