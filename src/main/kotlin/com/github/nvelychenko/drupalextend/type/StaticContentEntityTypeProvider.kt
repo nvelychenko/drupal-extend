@@ -33,6 +33,7 @@ class StaticContentEntityTypeProvider : PhpTypeProvider4 {
         Pair("load", ""),
         Pair("create", ""),
         Pair("loadMultiple", "[]"),
+        Pair("create", ""),
     )
 
     override fun getType(psiElement: PsiElement): PhpType? {

@@ -2,6 +2,7 @@ package com.github.nvelychenko.drupalextend.completion
 
 import com.github.nvelychenko.drupalextend.completion.providers.*
 import com.github.nvelychenko.drupalextend.patterns.Patterns.LEAF_STRING_IN_SIMPLE_ARRAY_VALUE
+import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_INSIDE_ARRAY_METHOD
 import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE
 import com.github.nvelychenko.drupalextend.patterns.Patterns.STRING_LITERAL_INSIDE_METHOD_PARAMETER
 import com.github.nvelychenko.drupalextend.patterns.Patterns.TRIPLE_ARRAY_WITH_STRING_VALUE
@@ -30,6 +31,13 @@ class DrupalCompletionContributor : CompletionContributor() {
         // $node->set('fi
         // $node->get('fi|
         extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, FieldCompletionCompletionProvider())
+
+        // Noe::create(['fi]);
+        extend(
+            CompletionType.BASIC,
+            psiElement(PsiElement::class.java).withParent(STRING_INSIDE_ARRAY_METHOD),
+            FieldInCreateMethodCompletionCompletionProvider()
+        )
 
         // $render = ['#them|
         extend(CompletionType.BASIC, STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE, BasicThemeOrTypeCompletionProvider())

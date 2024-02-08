@@ -148,6 +148,43 @@ object Patterns {
             .withLanguage(phpLanguage)
     }
 
+    val STRING_INSIDE_ARRAY_METHOD: Capture<StringLiteralExpression> by lazy {
+        psiElement(StringLiteralExpression::class.java)
+            .withParent(
+                or(
+                    psiElement(PhpElementTypes.ARRAY_KEY)
+                        .withParent(
+                            or(
+                                psiElement(PhpElementTypes.HASH_ARRAY_ELEMENT)
+                                    .withParent(
+                                        psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)
+                                            .withParent(
+                                                psiElement(PhpElementTypes.PARAMETER_LIST)
+                                                    .withParent(psiElement(PhpElementTypes.METHOD_REFERENCE))
+                                            )
+                                    ),
+                                psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)
+                                    .withParent(
+                                        psiElement(PhpElementTypes.PARAMETER_LIST)
+                                            .withParent(psiElement(PhpElementTypes.METHOD_REFERENCE))
+                                    )
+
+                            )
+                        ),
+                    psiElement(PhpElementTypes.ARRAY_VALUE)
+                        .withParent(
+                            psiElement(PhpElementTypes.ARRAY_CREATION_EXPRESSION)
+                                .withParent(
+                                    psiElement(PhpElementTypes.PARAMETER_LIST)
+                                        .withParent(psiElement(PhpElementTypes.METHOD_REFERENCE))
+                                )
+                        )
+                )
+
+            )
+            .withLanguage(phpLanguage)
+    }
+
     /**
      * @sample
      *

@@ -67,7 +67,7 @@ open class FieldCompletionCompletionProvider : CompletionProvider<CompletionPara
         }
     }
 
-    private fun getContentEntityFromReferenceAndBuildAutocomplete(
+    fun getContentEntityFromReferenceAndBuildAutocomplete(
         classReference: PhpReference,
         result: CompletionResultSet,
         isArrayAccessExpression: Boolean = false

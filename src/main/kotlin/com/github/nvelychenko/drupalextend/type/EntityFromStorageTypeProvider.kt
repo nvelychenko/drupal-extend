@@ -32,6 +32,7 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
         Pair("load", ""),
         Pair("loadByProperties", "[]"),
         Pair("loadMultiple", "[]"),
+        Pair("create", ""),
     )
 
     private val unclearKey = '\u0422'
@@ -46,6 +47,7 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
             !project.drupalExtendSettings.isEnabled
             || DumbService.getInstance(project).isDumb
             || psiElement !is MethodReference || psiElement.isStatic
+            || psiElement.name.isNullOrEmpty()
             || !possibleMethods.containsKey(psiElement.name)
         ) {
             return null
@@ -57,7 +59,7 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
             return PhpType().add("#$key$signature$unclearKey${psiElement.name}")
         }
 
-        val entityTypeId = signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore(".load")
+        val entityTypeId = signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore(".${psiElement.name!!}")
 
         return PhpType().add("#$key$entityTypeId$SPLIT_KEY${psiElement.name}")
     }
