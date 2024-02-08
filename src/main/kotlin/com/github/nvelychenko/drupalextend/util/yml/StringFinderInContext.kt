@@ -9,20 +9,20 @@ class StringFinderInContext(
     private val stringToFind: String,
     private val condition: ElementPattern<StringLiteralExpression>
 ) : PsiRecursiveElementVisitor() {
-    private var stringLitralPsi: StringLiteralExpression? = null
+    private var stringLiteralPsi: StringLiteralExpression? = null
 
     override fun visitElement(element: PsiElement) {
         if (condition.accepts(element) && element is StringLiteralExpression && element.contents == stringToFind) {
-            stringLitralPsi = element
+            stringLiteralPsi = element
         }
 
-        if (stringLitralPsi == null) {
+        if (stringLiteralPsi == null) {
             super.visitElement(element)
         }
     }
 
     fun findIn(element: PsiElement): StringLiteralExpression? {
         element.accept(this)
-        return stringLitralPsi
+        return stringLiteralPsi
     }
 }
