@@ -10,7 +10,7 @@ import com.intellij.util.ProcessingContext
 import com.jetbrains.php.lang.psi.elements.ArrayCreationExpression
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
-class BasicThemeOrTypeProvider : CompletionProvider<CompletionParameters>() {
+class BasicThemeOrTypeCompletionProvider : CompletionProvider<CompletionParameters>() {
     public override fun addCompletions(
         completionParameters: CompletionParameters,
         processingContext: ProcessingContext,

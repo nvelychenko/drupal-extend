@@ -15,7 +15,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.*
 
-class EntityStorageProvider : CompletionProvider<CompletionParameters>() {
+class EntityStorageCompletionProvider : CompletionProvider<CompletionParameters>() {
     public override fun addCompletions(
         completionParameters: CompletionParameters,
         processingContext: ProcessingContext,

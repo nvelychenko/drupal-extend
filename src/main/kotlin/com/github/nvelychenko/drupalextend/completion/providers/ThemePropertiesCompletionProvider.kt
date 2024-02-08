@@ -14,7 +14,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.lang.psi.elements.ArrayCreationExpression
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
-class ThemePropertiesProvider : CompletionProvider<CompletionParameters>() {
+class ThemePropertiesCompletionProvider : CompletionProvider<CompletionParameters>() {
 
     private val fileBasedIndex by lazy { FileBasedIndex.getInstance() }
 

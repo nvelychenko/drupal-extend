@@ -14,7 +14,7 @@ import com.github.nvelychenko.drupalextend.index.ContentEntityIndex.Companion.KE
  * $node->get('field_|
  * $node->set('field_|
  */
-open class EntityQueryConditionFieldProvider : FieldCompletionProvider() {
+open class EntityQueryConditionFieldCompletionProvider : FieldCompletionCompletionProvider() {
 
     override val methodsToAutocomplete = arrayOf("condition", "exists", "notExists", "sort")
 

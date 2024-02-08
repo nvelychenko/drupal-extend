@@ -19,42 +19,42 @@ class DrupalCompletionContributor : CompletionContributor() {
 
     init {
         // \Drupal::entityTypeManager->getStorage('no|
-        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, EntityStorageProvider())
+        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, EntityStorageCompletionProvider())
 
         // \Drupal::entityTypeManager->getStorage('no|
-        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, StaticEntityQueryProvider())
+        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, StaticEntityQueryCompletionProvider())
 
         // \Drupal::entityTypeManager->getQuery()->condition('
-        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, EntityQueryConditionFieldProvider())
+        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, EntityQueryConditionFieldCompletionProvider())
 
         // $node->set('fi
         // $node->get('fi|
-        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, FieldCompletionProvider())
+        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, FieldCompletionCompletionProvider())
 
         // $render = ['#them|
-        extend(CompletionType.BASIC, STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE, BasicThemeOrTypeProvider())
+        extend(CompletionType.BASIC, STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE, BasicThemeOrTypeCompletionProvider())
 
         // $render = [
         //    '#type' => '|
         // ];
-        extend(CompletionType.BASIC, LEAF_STRING_IN_SIMPLE_ARRAY_VALUE, RenderElementTypeProvider())
+        extend(CompletionType.BASIC, LEAF_STRING_IN_SIMPLE_ARRAY_VALUE, RenderElementTypeCompletionProvider())
 
         // $render = [
         //    '#theme' => '|
         // ];
-        extend(CompletionType.BASIC, LEAF_STRING_IN_SIMPLE_ARRAY_VALUE, ThemeProvider())
+        extend(CompletionType.BASIC, LEAF_STRING_IN_SIMPLE_ARRAY_VALUE, ThemeCompletionProvider())
 
         // $render = [
         //    '#type' => 'checkbox',
         //    '#|
         // ];
-        extend(CompletionType.BASIC, STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE, RenderElementTypePropertiesProvider())
+        extend(CompletionType.BASIC, STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE, RenderElementTypePropertiesCompletionProvider())
 
         // $render = [
         //    '#theme' => 'item_list',
         //    '#|
         // ];
-        extend(CompletionType.BASIC, STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE, ThemePropertiesProvider())
+        extend(CompletionType.BASIC, STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE, ThemePropertiesCompletionProvider())
 
         // $build['#attached']['library'][] = 'he|
         extend(

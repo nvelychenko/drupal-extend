@@ -15,7 +15,7 @@ import com.jetbrains.php.lang.psi.elements.MethodReference
 import com.jetbrains.php.lang.psi.elements.ParameterList
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
-class StaticEntityQueryProvider : CompletionProvider<CompletionParameters>() {
+class StaticEntityQueryCompletionProvider : CompletionProvider<CompletionParameters>() {
     public override fun addCompletions(
         completionParameters: CompletionParameters,
         processingContext: ProcessingContext,
