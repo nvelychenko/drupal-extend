@@ -1,6 +1,6 @@
 package com.github.nvelychenko.drupalextend.reference.referenceProvider
 
-import com.github.nvelychenko.drupalextend.extensions.getThemeOrRenderElementValue
+import com.github.nvelychenko.drupalextend.extensions.getArrayStringLiteralValue
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.extensions.hasDrupalTheme
 import com.github.nvelychenko.drupalextend.index.ThemeIndex
@@ -25,7 +25,7 @@ class ThemeReferenceProvider : PsiReferenceProvider() {
 
         if (!element.hasDrupalTheme()) return emptyArray()
 
-        val value = element.getThemeOrRenderElementValue() ?: return emptyArray()
+        val value = element.getArrayStringLiteralValue() ?: return emptyArray()
 
         val renderElement = FileBasedIndex.getInstance()
             .getValue(ThemeIndex.KEY, value.contents, project)

@@ -1,6 +1,6 @@
 package com.github.nvelychenko.drupalextend.psi
 
-import com.github.nvelychenko.drupalextend.extensions.getThemeOrRenderElementValue
+import com.github.nvelychenko.drupalextend.extensions.getArrayStringLiteralValue
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.extensions.hasDrupalRenderElement
 import com.github.nvelychenko.drupalextend.extensions.hasDrupalTheme
@@ -32,14 +32,14 @@ class RenderElementAnnotator : Annotator {
         element as StringLiteralExpression
 
         val tooltip = if (element.hasDrupalRenderElement()) {
-            val key = element.getThemeOrRenderElementValue() ?: return
+            val key = element.getArrayStringLiteralValue() ?: return
             fileBasedIndex.getValue(
                 RenderElementIndex.KEY,
                 key.contents,
                 element.project
             )?.renderElementType
         } else if (element.hasDrupalTheme()) {
-            val key = element.getThemeOrRenderElementValue() ?: return
+            val key = element.getArrayStringLiteralValue() ?: return
             fileBasedIndex.getValue(
                 ThemeIndex.KEY,
                 key.contents,

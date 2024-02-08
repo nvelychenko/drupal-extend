@@ -29,7 +29,7 @@ import com.jetbrains.php.lang.psi.elements.*
  * $node->get('field_|
  * $node->set('field_|
  */
-open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() {
+open class FieldCompletionCompletionProvider : CompletionProvider<CompletionParameters>() {
     val fileBasedIndex: FileBasedIndex by lazy {
         FileBasedIndex.getInstance()
     }
@@ -67,7 +67,7 @@ open class FieldCompletionProvider : CompletionProvider<CompletionParameters>() 
         }
     }
 
-    private fun getContentEntityFromReferenceAndBuildAutocomplete(
+    fun getContentEntityFromReferenceAndBuildAutocomplete(
         classReference: PhpReference,
         result: CompletionResultSet,
         isArrayAccessExpression: Boolean = false

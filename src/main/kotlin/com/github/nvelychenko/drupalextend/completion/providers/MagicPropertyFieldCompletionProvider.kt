@@ -13,7 +13,7 @@ import com.jetbrains.php.lang.psi.elements.FieldReference
  *
  * $node->field|
  */
-class MagicPropertyFieldCompletionProvider : FieldCompletionProvider() {
+class MagicPropertyFieldCompletionProvider : FieldCompletionCompletionProvider() {
 
     /**
      * I don't want to show magic field at the top, hence such priority.

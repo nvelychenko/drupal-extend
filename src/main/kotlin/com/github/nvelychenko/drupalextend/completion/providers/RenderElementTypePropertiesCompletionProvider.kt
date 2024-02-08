@@ -17,7 +17,7 @@ import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.ArrayCreationExpression
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
-class RenderElementTypePropertiesProvider : CompletionProvider<CompletionParameters>() {
+class RenderElementTypePropertiesCompletionProvider : CompletionProvider<CompletionParameters>() {
 
     private val fileBasedIndex by lazy { FileBasedIndex.getInstance() }
     private val insertHandler by lazy { RenderElementTypeInsertionHandler() }

@@ -54,14 +54,14 @@ fun LeafPsiElement.hasDrupalRenderElement(): Boolean {
 }
 
 fun StringLiteralExpression.hasDrupalTheme(): Boolean {
-    return "#theme" == getThemeOrRenderElementKey()?.contents
+    return "#theme" == getArrayStringLiteralKey()?.contents
 }
 
 fun StringLiteralExpression.hasDrupalRenderElement(): Boolean {
-    return "#type" == getThemeOrRenderElementKey()?.contents
+    return "#type" == getArrayStringLiteralKey()?.contents
 }
 
-fun StringLiteralExpression.getThemeOrRenderElementKey(): StringLiteralExpression? {
+fun StringLiteralExpression.getArrayStringLiteralKey(): StringLiteralExpression? {
     return when (val subParent = parent) {
         is AssignmentExpression -> {
             (subParent.variable as ArrayAccessExpression).index?.value as? StringLiteralExpression ?: return null
@@ -76,7 +76,7 @@ fun StringLiteralExpression.getThemeOrRenderElementKey(): StringLiteralExpressio
     }
 }
 
-fun StringLiteralExpression.getThemeOrRenderElementValue(): StringLiteralExpression? {
+fun StringLiteralExpression.getArrayStringLiteralValue(): StringLiteralExpression? {
     return when (val subParent = parent) {
         is AssignmentExpression -> {
             subParent.value as? StringLiteralExpression
