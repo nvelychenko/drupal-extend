@@ -3,9 +3,9 @@ package com.github.nvelychenko.drupalextend.type
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
-import com.github.nvelychenko.drupalextend.patterns.Patterns
+import com.github.nvelychenko.drupalextend.patterns.Patterns.METHOD_WITH_FIRST_STRING_PARAMETER
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
-import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider.Util.SPLITER_KEY
+import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider.Util.SPLIT_KEY
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -15,11 +15,6 @@ import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.*
 import com.jetbrains.php.lang.psi.resolve.types.PhpType
 import com.jetbrains.php.lang.psi.resolve.types.PhpTypeProvider4
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.util.*
-import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
 
 
 /**
@@ -43,55 +38,31 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
         if (
             !project.drupalExtendSettings.isEnabled
             || DumbService.getInstance(project).isDumb
-            || !Patterns.METHOD_WITH_FIRST_STRING_PARAMETER.accepts(methodReference)
+            || !METHOD_WITH_FIRST_STRING_PARAMETER.accepts(methodReference)
+            || methodReference !is MethodReference
+            || methodReference.name != "getStorage"
         ) {
             return null
         }
 
-        methodReference as MethodReference
-
-        if (methodReference.name != "getStorage") {
-            return null
-        }
-
         val parameterList = methodReference.childrenOfType<ParameterList>().first()
-
         val firstParameter = parameterList.getParameter(0) as StringLiteralExpression
 
-        if (firstParameter.contents.isEmpty()) return null
+        if (firstParameter.contents.isBlank()) return null
 
-        val signature = compressString(methodReference.signature).replace('|', SPLITER_KEY)
-        return PhpType().add("#$key${signature}${Util.SPLIT_KEY}${firstParameter.contents}")
+        return PhpType().add("#$key${compressSignature(methodReference.signature)}$SPLIT_KEY${firstParameter.contents}")
     }
 
-    private fun compressString(str: String): String {
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        GZIPOutputStream(byteArrayOutputStream).bufferedWriter(Charsets.UTF_8).use { it.write(str) }
-        return Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray())
-    }
+    override fun complete(expression: String, project: Project): PhpType? {
+        if (!expression.contains(SPLIT_KEY)) return null
 
-    private fun decompressString(compressedStr: String): String {
-        val bytes = Base64.getDecoder().decode(compressedStr)
-        return GZIPInputStream(ByteArrayInputStream(bytes)).bufferedReader(Charsets.UTF_8).use { it.readText() }
-    }
-
-    override fun complete(expression: String?, project: Project?): PhpType? {
-        if (project == null || expression == null || !expression.contains(Util.SPLIT_KEY)) return null
-
-        val signature = expression.replace("#${key}", "")
-        val parts = signature.split(Util.SPLIT_KEY)
-
-        if (parts.size != 2) {
-            return null
-        }
-
-        val (originalSignature, entityTypeId) = parts
+        val (originalSignature, entityTypeId) = expression.substring(2).split(SPLIT_KEY)
 
         val entityType = fileBasedIndex.getValue(ContentEntityIndex.KEY, entityTypeId, project) ?: return null
 
         val phpIndex = PhpIndex.getInstance(project)
         val namedCollection = mutableListOf<PhpNamedElement>()
-        for (partialSignature in decompressString(originalSignature.replace(SPLITER_KEY, '|')).split('|')) {
+        for (partialSignature in decompressSignature(originalSignature).split('|')) {
             namedCollection.addAll(phpIndex.getBySignature(partialSignature))
         }
 
@@ -111,9 +82,9 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
         methods.forEach { method ->
             val clazz = method.containingClass ?: return@forEach
             if (clazz.fqn == entityTypeManagerInterface.fqn || clazz.isSuperInterfaceOf(entityTypeManagerInterface)) {
-                entityStorageClass.implementsList.referenceElements.map {
-                    it.fqn
-                }.forEach(type::add)
+                entityStorageClass.implementsList.referenceElements
+                    .map { it.fqn }
+                    .forEach(type::add)
             }
         }
 
@@ -129,7 +100,6 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
     object Util {
         const val SPLIT_KEY = '\u3333'
         const val KEY = '\u3334'
-        const val SPLITER_KEY = '\u3336'
     }
 
 

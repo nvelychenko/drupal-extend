@@ -1,43 +1,27 @@
 package com.github.nvelychenko.drupalextend.type
 
-import com.github.nvelychenko.drupalextend.data.configEntitySqlFactoryClass
-import com.github.nvelychenko.drupalextend.data.contentEntitySqlFactoryClass
 import com.github.nvelychenko.drupalextend.extensions.getValue
-import com.github.nvelychenko.drupalextend.index.*
+import com.github.nvelychenko.drupalextend.index.ConfigEntityIndex
+import com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex
+import com.github.nvelychenko.drupalextend.index.ContentEntityIndex
+import com.github.nvelychenko.drupalextend.index.FieldsIndex
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.type.EntityStorageTypeProvider.Util.SPLIT_KEY
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.indexing.FileBasedIndex
-import com.jetbrains.php.PhpIndex
-import com.jetbrains.php.lang.psi.elements.*
+import com.jetbrains.php.lang.psi.elements.FieldReference
+import com.jetbrains.php.lang.psi.elements.PhpNamedElement
+import com.jetbrains.php.lang.psi.elements.PhpTypedElement
 import com.jetbrains.php.lang.psi.resolve.types.PhpType
 import com.jetbrains.php.lang.psi.resolve.types.PhpTypeProvider4
-import org.apache.commons.lang3.StringUtils
 
 /**
  * $user = $node->get('user')->entity();
  *    ↑
  */
 class EntityReferenceFieldTypeProvider : PhpTypeProvider4 {
-
-    private val possibleMethods = arrayOf(
-        "condition",
-        "allRevisions",
-        "latestRevision",
-        "currentRevision",
-        "accessCheck",
-        "count",
-        "tableSort",
-        "sort",
-        "range",
-        "pager",
-        "notExists",
-        "exists",
-        "entityQuery",
-        "getQuery",
-    )
 
     private val fileBasedIndex: FileBasedIndex by lazy {
         FileBasedIndex.getInstance()
@@ -54,47 +38,70 @@ class EntityReferenceFieldTypeProvider : PhpTypeProvider4 {
             || DumbService.getInstance(project).isDumb
             || psiElement !is FieldReference
             || psiElement.name != "entity"
+            || psiElement.signature.isBlank()
+            || psiElement.classReference !is PhpTypedElement
         ) {
             return null
         }
 
-        if (StringUtils.isBlank(psiElement.signature)) {
-            return null
-        }
+        val classReference = psiElement.classReference as PhpTypedElement
 
-        val parentSignature = when (val classReference = psiElement.classReference) {
-            is Variable -> classReference.signature
-            is MethodReference -> classReference.signature
-            else -> return null
-        }
-        val entitySignature = parentSignature.substringAfter(FieldItemListTypeProvider.KEY).substringBefore(FieldItemListTypeProvider.END_KEY)
-        val fieldName = parentSignature.substringAfter(FieldItemListTypeProvider.END_KEY).substringBefore('|')
-        return PhpType().add("#$key$entitySignature$END_KEY$fieldName")
+        val types = classReference.type.types
+
+        val keyTypes = types.filter { it.contains(FieldItemListTypeProvider.END_KEY) }
+
+        if (keyTypes.isEmpty()) return null
+
+        val signature = compressSignature(types.joinToString("|"))
+        val type =
+            PhpType().add("#$key$signature$END_KEY${keyTypes.last().substringAfter(FieldItemListTypeProvider.END_KEY)}")
+
+        return type
     }
 
-    override fun complete(expression: String?, project: Project?): PhpType? {
-        if (expression == null || project == null || !expression.startsWith("#$key"))
+    override fun complete(expression: String, project: Project): PhpType? {
+        if (!expression.startsWith("#$key"))
             return null
 
-        val parentTypes = expression.substring(2).substringBefore(END_KEY);
-        val fieldName = expression.substringAfter(END_KEY)
+        val (rawSignature, fieldName) = expression.substring(2).split(END_KEY)
+        val signature = decompressSignature(rawSignature)
 
-
-        val index = PhpIndex.getInstance(project)
-        val entityTypes = PhpType();
-        parentTypes.split('|').forEach {
-            entityTypes.add(index.completeType(project, PhpType().add(it), mutableSetOf<String>()))
-        }
-        entityTypes.types.forEach {
-            val entityType = fileBasedIndex.getValue(ContentEntityFqnIndex.KEY, it, project) ?: return@forEach
-            val field = fileBasedIndex.getValue(FieldsIndex.KEY, "${entityType.entityTypeId}|${fieldName}", project) ?: return@forEach
-            if (field.targetType.isNullOrEmpty()) return@forEach
-            val targetEntity = fileBasedIndex.getValue(ContentEntityIndex.KEY, field.targetType, project) ?: return@forEach
-            return PhpType().add(targetEntity.fqn)
+        val type = PhpType()
+        if (signature.contains(SPLIT_KEY)) {
+            val contentEntityId = signature.substringAfter(SPLIT_KEY).substringBefore(".")
+            addType(contentEntityId, fieldName, project, type)
+            return type
         }
 
-        return null
+        getClassesFromSignature(signature, project)
+            .mapNotNull { fileBasedIndex.getValue(ContentEntityFqnIndex.KEY, it.fqn, project) }
+            .forEach { contentEntity ->
+                if (addType(contentEntity.entityTypeId, fieldName, project, type)) return@forEach
+            }
 
+        return type
+
+    }
+
+    private fun addType(
+        contentEntityId: String,
+        fieldName: String,
+        project: Project,
+        type: PhpType
+    ): Boolean {
+        val field = fileBasedIndex
+            .getValue(FieldsIndex.KEY, "${contentEntityId}|${fieldName}", project)
+            ?: return true
+
+        if (field.targetType.isNullOrEmpty()) return true
+        fileBasedIndex
+            .getValue(ContentEntityIndex.KEY, field.targetType, project)
+            ?.let { type.add(it.fqn) }
+
+        fileBasedIndex
+            .getValue(ConfigEntityIndex.KEY, field.targetType, project)
+            ?.let { type.add(it) }
+        return false
     }
 
     override fun getBySignature(
@@ -102,8 +109,8 @@ class EntityReferenceFieldTypeProvider : PhpTypeProvider4 {
         visited: Set<String?>?,
         depth: Int,
         project: Project?
-    ): Collection<PhpNamedElement> {
-        return emptyList()
+    ): Collection<PhpNamedElement>? {
+        return null
     }
 
     companion object {

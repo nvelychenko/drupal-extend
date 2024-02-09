@@ -9,11 +9,10 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.indexing.FileBasedIndex
-import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.*
 import com.jetbrains.php.lang.psi.resolve.types.PhpType
 import com.jetbrains.php.lang.psi.resolve.types.PhpTypeProvider4
-import org.apache.commons.lang3.StringUtils
+import com.github.nvelychenko.drupalextend.type.EntityFromStorageTypeProvider.Companion.SPLIT_KEY as EntitySplitKey
 
 
 /**
@@ -36,97 +35,32 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
         if (
             !project.drupalExtendSettings.isEnabled
             || DumbService.getInstance(project).isDumb
+            || psiElement !is MethodReference
         ) {
             return null
         }
+        val firstParameter = psiElement.parameters.firstOrNull() ?: return null
+        if (psiElement.name != "get" || firstParameter !is StringLiteralExpression || firstParameter.contents.isBlank()) return null
+        val name = firstParameter.contents
 
-        val (signature, name) = getSignature(psiElement) ?: return null
+        val classReference = (psiElement as MemberReference).classReference
 
-        if (StringUtils.isBlank(signature)) {
-            return null
-        }
-
-        val classReference = when (psiElement) {
-            is MethodReference -> psiElement.classReference
-            is FieldReference -> psiElement.classReference
-            else -> return null
-        }
-
-        val parentSignature = when (classReference) {
+        val signature = when (classReference) {
             is Variable -> classReference.type
             is MethodReference -> classReference.type
             else -> return null
         }.toString()
-        return PhpType().add("#$key$parentSignature$END_KEY$name")
+
+        return PhpType().add("#$key${compressSignature(signature)}$END_KEY$name")
     }
-
-    private fun getSignature(psiElement: PsiElement): Array<String>? {
-        return when (psiElement) {
-            is MethodReference -> {
-                val parameters = psiElement.parameters
-                if (psiElement.name != "get" || parameters.isEmpty()) {
-                    return null
-                }
-
-                val firstParam = parameters[0]
-                if (firstParam !is StringLiteralExpression) {
-                    return null
-                }
-
-                arrayOf(psiElement.signature, firstParam.contents)
-            }
-
-            is FieldReference -> {
-                arrayOf(psiElement.signature, psiElement.name ?: "")
-            }
-
-            else -> null
-        }
-    }
-
 
     override fun complete(expression: String, project: Project): PhpType? {
         if (!expression.contains(END_KEY)) return null
-        val (signatures, fieldName) = expression.substring(2).split(END_KEY)
-
-        val entityTypes = mutableListOf<String>()
-        if (signatures.contains("#" + EntityFromStorageTypeProvider.KEY) && signatures.contains(
-                EntityFromStorageTypeProvider.SPLIT_KEY
-            )
-        ) {
-            val entityTypeId = signatures.substringAfter(EntityFromStorageTypeProvider.KEY)
-                .substringBefore(EntityFromStorageTypeProvider.SPLIT_KEY)
-            entityTypes.add(entityTypeId)
-        } else {
-            val objects = mutableListOf<PhpNamedElement>()
-
-            val index = PhpIndex.getInstance(project)
-
-            for (signature in signatures.split('|')) {
-                if (signature.startsWith('#')) {
-                    objects.addAll(index.getBySignature(signature))
-                } else {
-                    objects.addAll(index.getAnyByFQN(signature))
-                }
-            }
-
-
-            for (clazz in objects) {
-                if (clazz !is PhpClass) continue
-
-                val entity = FileBasedIndex.getInstance().getValue(ContentEntityFqnIndex.KEY, clazz.fqn, project)
-                    ?: continue
-
-                val entityTypeId = entity.entityTypeId
-                entityTypes.add(entityTypeId)
-            }
-        }
-
+        val (signature, fieldName) = expression.substring(2).split(END_KEY)
         val type = PhpType()
 
-        entityTypes.forEach {
+        getEntityTypes(decompressSignature(signature), project).forEach {
             val field = fileBasedIndex.getValue(FieldsIndex.KEY, "${it}|${fieldName}", project) ?: return null
-
             val fieldType = fileBasedIndex.getValue(FieldTypeIndex.KEY, field.fieldType, project) ?: return null
 
             type.add(
@@ -141,6 +75,27 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
         }
 
         return type
+    }
+
+    private fun getEntityTypes(
+        signatures: String,
+        project: Project
+    ): Set<String> {
+        val entityTypes = mutableListOf<String>()
+        if (signatures.contains(EntitySplitKey)) {
+            signatures
+                .substringAfter(EntityFromStorageTypeProvider.KEY)
+                .substringBefore(EntitySplitKey)
+                .let { entityTypes.add(it) }
+
+            return entityTypes.toSet()
+        }
+
+        getClassesFromSignature(signatures, project)
+            .mapNotNull { fileBasedIndex.getValue(ContentEntityFqnIndex.KEY, it.fqn, project) }
+            .forEach { entityTypes.add(it.entityTypeId) }
+
+        return entityTypes.toSet()
     }
 
     override fun getBySignature(

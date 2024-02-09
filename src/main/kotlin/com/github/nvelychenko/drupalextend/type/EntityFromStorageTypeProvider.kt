@@ -56,28 +56,27 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
         val signature = psiElement.signature
 
         if (!signature.contains(EntityStorageTypeProvider.Util.SPLIT_KEY)) {
-            return PhpType().add("#$key$signature$unclearKey${psiElement.name}")
+            return PhpType().add("#$key${compressSignature(signature)}$unclearKey${psiElement.name}")
         }
 
-        val entityTypeId = signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore(".${psiElement.name!!}")
+        val entityTypeId =
+            signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore(".${psiElement.name!!}")
 
         return PhpType().add("#$key$entityTypeId$SPLIT_KEY${psiElement.name}")
     }
 
-    override fun complete(expression: String?, project: Project?): PhpType? {
-        if (expression == null || project == null)
-            return null
-
-        val clearedExpression = expression.substring(2)
+    override fun complete(s: String, project: Project): PhpType? {
+        val expression = s.substring(2)
 
         val entityTypeId: String?
         val methodName: String
-        if (clearedExpression.contains(SPLIT_KEY)) {
-            val split = clearedExpression.split(SPLIT_KEY)
+
+        if (expression.contains(SPLIT_KEY)) {
+            val split = expression.split(SPLIT_KEY)
             entityTypeId = split[0]
             methodName = split[1]
-        } else if (clearedExpression.contains(unclearKey)) {
-            val result = unknownStorageProcess(clearedExpression, project) ?: return null
+        } else if (expression.contains(unclearKey)) {
+            val result = unknownStorageProcess(decompressSignature(expression), project) ?: return null
             entityTypeId = result.second
             methodName = result.first
         } else {
@@ -111,6 +110,8 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
                 classes.add(partialSignature.substringAfter("#M#C").substringBefore(".$methodName"))
             }
         }
+
+        if (classes.isEmpty()) return null
 
         val entityStorageInterface =
             phpIndex.getInterfacesByFQN("\\Drupal\\Core\\Entity\\EntityStorageInterface").firstOrNull() ?: return null
