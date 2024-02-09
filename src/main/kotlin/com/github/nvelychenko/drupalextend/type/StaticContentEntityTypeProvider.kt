@@ -46,7 +46,7 @@ class StaticContentEntityTypeProvider : PhpTypeProvider4 {
 
         if (!possibleMethods.containsKey(psiElement.name)) return null
 
-        return PhpType().add("#$key${compressSignature(psiElement.signature)}$splitKey${psiElement.name}")
+        return returnCachedType(project, "#$key${compressSignature(psiElement.signature)}$splitKey${psiElement.name}")
     }
 
     override fun complete(expression: String, project: Project): PhpType? {
@@ -64,7 +64,13 @@ class StaticContentEntityTypeProvider : PhpTypeProvider4 {
                 ) ?: continue
 
                 val methodType = possibleMethods[methodName] ?: ""
-                return PhpType().add(contentEntity.fqn + methodType)
+                val type = PhpType().add(contentEntity.fqn + methodType)
+
+                if (!type.isEmpty) {
+                    putTypeInCache(project, expression, type)
+                }
+
+                return type
             }
         }
 

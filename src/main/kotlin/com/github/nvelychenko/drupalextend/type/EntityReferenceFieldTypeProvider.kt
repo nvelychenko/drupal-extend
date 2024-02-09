@@ -48,19 +48,20 @@ class EntityReferenceFieldTypeProvider : PhpTypeProvider4 {
 
         val types = classReference.type.types
 
-        val keyTypes = types.filter { it.contains(FieldItemListTypeProvider.END_KEY) }
+        val keyTypes = types.filter { it.contains(FieldItemListTypeProvider.END_KEY) || it.contains(FieldItemListTypeProvider.STOP_KEY) }
 
         if (keyTypes.isEmpty()) return null
 
         val signature = compressSignature(types.joinToString("|"))
-        val type =
-            PhpType().add("#$key$signature$END_KEY${keyTypes.last().substringAfter(FieldItemListTypeProvider.END_KEY)}")
 
-        return type
+        val fieldName = keyTypes.last().substringAfter(
+            if (keyTypes.last().contains(FieldItemListTypeProvider.STOP_KEY)) { FieldItemListTypeProvider.STOP_KEY } else { FieldItemListTypeProvider.END_KEY }
+        )
+        return returnCachedType(project, "#$key$signature$END_KEY$fieldName", "#$key$STOP_KEY$fieldName")
     }
 
     override fun complete(expression: String, project: Project): PhpType? {
-        if (!expression.startsWith("#$key"))
+        if (!expression.startsWith("#$key") || expression.contains(STOP_KEY))
             return null
 
         val (rawSignature, fieldName) = expression.substring(2).split(END_KEY)
@@ -70,6 +71,10 @@ class EntityReferenceFieldTypeProvider : PhpTypeProvider4 {
         if (signature.contains(SPLIT_KEY)) {
             val contentEntityId = signature.substringAfter(SPLIT_KEY).substringBefore(".")
             addType(contentEntityId, fieldName, project, type)
+
+            if (!type.isEmpty) {
+                putTypeInCache(project, expression, type)
+            }
             return type
         }
 
@@ -78,6 +83,10 @@ class EntityReferenceFieldTypeProvider : PhpTypeProvider4 {
             .forEach { contentEntity ->
                 if (addType(contentEntity.entityTypeId, fieldName, project, type)) return@forEach
             }
+
+        if (!type.isEmpty) {
+            putTypeInCache(project, expression, type)
+        }
 
         return type
 
@@ -116,6 +125,7 @@ class EntityReferenceFieldTypeProvider : PhpTypeProvider4 {
     companion object {
         const val END_KEY = '\u0428'
         const val KEY = '\u0427'
+        const val STOP_KEY = '\u0429'
     }
 
 

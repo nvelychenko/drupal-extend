@@ -56,13 +56,13 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
         val signature = psiElement.signature
 
         if (!signature.contains(EntityStorageTypeProvider.Util.SPLIT_KEY)) {
-            return PhpType().add("#$key${compressSignature(signature)}$unclearKey${psiElement.name}")
+            return returnCachedType(project, "#$key${compressSignature(signature)}$unclearKey${psiElement.name}")
         }
 
         val entityTypeId =
             signature.substringAfter(EntityStorageTypeProvider.Util.SPLIT_KEY).substringBefore(".${psiElement.name!!}")
 
-        return PhpType().add("#$key$entityTypeId$SPLIT_KEY${psiElement.name}")
+        return returnCachedType(project, "#$key$entityTypeId$SPLIT_KEY${psiElement.name}")
     }
 
     override fun complete(s: String, project: Project): PhpType? {
@@ -83,14 +83,26 @@ class EntityFromStorageTypeProvider : PhpTypeProvider4 {
             return null
         }
 
+        val type = PhpType()
+
         val contentEntity = fileBasedIndex.getValue(ContentEntityIndex.KEY, entityTypeId, project)
         if (contentEntity != null) {
-            return PhpType().add(contentEntity.fqn.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
+            type.add(contentEntity.fqn.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
+            if (!type.isEmpty) {
+                putTypeInCache(project, expression, type)
+            }
+
+            return type
         }
 
         val configEntity = fileBasedIndex.getValue(ConfigEntityIndex.KEY, entityTypeId, project)
         if (configEntity != null) {
-            return PhpType().add(configEntity.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
+            type.add(configEntity.letIf(possibleMethods.containsKey(methodName)) { fqn -> fqn + possibleMethods[methodName] })
+            if (!type.isEmpty) {
+                putTypeInCache(project, expression, type)
+            }
+
+            return type
         }
 
         return null

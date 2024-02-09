@@ -2,10 +2,16 @@
 
 package com.github.nvelychenko.drupalextend.type
 
+import com.github.nvelychenko.drupalextend.extensions.getKey
+import com.github.nvelychenko.drupalextend.extensions.keyForProvider
 import com.intellij.openapi.project.Project
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.PhpClass
 import com.jetbrains.php.lang.psi.elements.PhpNamedElement
+import com.jetbrains.php.lang.psi.resolve.types.PhpType
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.*
@@ -68,4 +74,45 @@ fun getClassesFromSignature(signatures: String, project: Project): List<PhpClass
     return potentialClasses
         .filterIsInstance<PhpClass>()
         .toList()
+}
+
+@Synchronized
+fun putTypeInCache(
+    project: Project,
+    expression: String,
+    type: PhpType
+): String {
+    if (keyForProvider.count() > 300) {
+        keyForProvider.clear()
+    }
+
+    return CachedValuesManager.getManager(project).getCachedValue(
+        project,
+        getKey(expression.hashCode().toString()),
+        {
+            CachedValueProvider.Result.create(
+                type.filterPrimitives().toString(),
+                PsiModificationTracker.MODIFICATION_COUNT
+            )
+        },
+        false
+    )
+}
+
+@Synchronized
+fun returnCachedType(
+    project: Project,
+    expression: String,
+    additionalType: String? = null
+): PhpType {
+    val type = PhpType();
+    keyForProvider[expression.hashCode().toString()]
+        ?.let { project.getUserData(it) }
+        ?.let { cachedValue ->
+            (cachedValue.value as String).split("|").forEach(type::add)
+            additionalType?.let { type.add(it) }
+            return type
+        }
+
+    return type.add(expression)
 }

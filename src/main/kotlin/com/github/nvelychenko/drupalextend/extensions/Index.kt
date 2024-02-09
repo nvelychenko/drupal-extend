@@ -48,9 +48,9 @@ fun FileContent.isInConfigurationDirectory(): Boolean {
     return VfsUtil.isEqualOrAncestor(configDirectory, file.path)
 }
 
-private val keyForProvider: ConcurrentMap<String, Key<CachedValue<*>>> = ConcurrentHashMap()
+val keyForProvider: ConcurrentMap<String, Key<CachedValue<*>>> = ConcurrentHashMap()
 
-private fun <K> getKey(name: String): Key<CachedValue<K>> {
+fun <K> getKey(name: String): Key<CachedValue<K>> {
     @Suppress("UNCHECKED_CAST")
     return (keyForProvider[name] ?: ConcurrencyUtil.cacheOrGet(
         keyForProvider,

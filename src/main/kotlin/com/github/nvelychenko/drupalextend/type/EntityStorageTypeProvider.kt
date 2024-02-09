@@ -50,7 +50,9 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
 
         if (firstParameter.contents.isBlank()) return null
 
-        return PhpType().add("#$key${compressSignature(methodReference.signature)}$SPLIT_KEY${firstParameter.contents}")
+        val expression = "#$key${compressSignature(methodReference.signature)}$SPLIT_KEY${firstParameter.contents}"
+
+        return returnCachedType(project, expression)
     }
 
     override fun complete(expression: String, project: Project): PhpType? {
@@ -86,6 +88,10 @@ class EntityStorageTypeProvider : PhpTypeProvider4 {
                     .map { it.fqn }
                     .forEach(type::add)
             }
+        }
+
+        if (!type.isEmpty) {
+            putTypeInCache(project, expression, type)
         }
 
         return type
