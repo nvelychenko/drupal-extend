@@ -51,11 +51,11 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
             else -> return null
         }.toString()
 
-        return returnCachedType(project, "#$key${compressSignature(signature)}$END_KEY$name", "#$key$STOP_KEY$name")
+        return PhpType().add("#$key${compressSignature(signature)}$END_KEY$name")
     }
 
     override fun complete(expression: String, project: Project): PhpType? {
-        if (!expression.contains(END_KEY) || expression.contains(STOP_KEY)) return null
+        if (!expression.contains(END_KEY)) return null
         val (signature, fieldName) = expression.substring(2).split(END_KEY)
         val type = PhpType()
 
@@ -72,10 +72,6 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
             )
 
             type.add("${fieldType.fqn}[]")
-        }
-
-        if (!type.isEmpty) {
-            putTypeInCache(project, expression, type)
         }
 
         return type
@@ -114,7 +110,6 @@ class FieldItemListTypeProvider : PhpTypeProvider4 {
     companion object {
         const val END_KEY = '\u3339'
         const val KEY = '\u3338'
-        const val STOP_KEY = '\u3340'
     }
 
 }

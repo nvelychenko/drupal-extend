@@ -17,7 +17,6 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key.create
 import com.intellij.util.ProcessingContext
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.php.PhpClassHierarchyUtils
@@ -34,9 +33,6 @@ open class FieldCompletionCompletionProvider : CompletionProvider<CompletionPara
     val fileBasedIndex: FileBasedIndex by lazy {
         FileBasedIndex.getInstance()
     }
-
-    val key = create<Pair<Int, DrupalContentEntity>>("com.github.nvelychenko.drupalextend.completion.providers.FieldCompletionCompletionProvider")
-    val fieldKey = create<Pair<Int, List<Pair<String, String>>>>("com.github.nvelychenko.drupalextend.completion.providers.FieldCompletionCompletionProvider.fieldKey")
 
     protected open val methodsToAutocomplete = arrayOf("get", "set")
 
@@ -90,12 +86,6 @@ open class FieldCompletionCompletionProvider : CompletionProvider<CompletionPara
             }
         }
 
-        val hashCode = classReference.type.hashCode()
-        val userData = classReference.getUserData(key)
-
-        if (userData?.first == hashCode) {
-            return buildResultForEntity(userData.second, project, result, classReference)
-        }
 
         val globalTypes = classReference.globalType.types.map {
             // Situation is following, there is array of nodes. Node[]
@@ -112,32 +102,14 @@ open class FieldCompletionCompletionProvider : CompletionProvider<CompletionPara
         val contentEntity =
             fileBasedIndex.getValue(ContentEntityIndex.KEY, contentEntityFqn.entityTypeId, project) ?: return
 
-        classReference.putUserData(key, Pair(hashCode, contentEntity))
-
-        buildResultForEntity(contentEntity, project, result, classReference)
+        buildResultForEntity(contentEntity, project, result)
     }
 
     protected fun buildResultForEntity(
         contentEntity: DrupalContentEntity,
         project: Project,
-        result: CompletionResultSet,
-        classReference: PhpReference? = null
+        result: CompletionResultSet
     ) {
-        val hashCode = classReference?.type.hashCode()
-        val userData = classReference?.getUserData(fieldKey)
-        if (userData != null && userData.first == hashCode) {
-            userData.second.forEach {
-                result.addElement(
-                    PrioritizedLookupElement.withPriority(
-                        LookupElementBuilder.create(it.second).withTypeText(it.first, true),
-                        priority
-                    )
-
-                )
-            }
-            return
-        }
-
         val entityTypeId = contentEntity.entityTypeId
         val keys =
             fileBasedIndex.getValue(ContentEntityIndex.KEY, entityTypeId, project)?.keys?.toMutableMap() ?: return
@@ -155,7 +127,6 @@ open class FieldCompletionCompletionProvider : CompletionProvider<CompletionPara
                 }
             }
 
-        val fields = mutableListOf<Pair<String, String>>()
         fileBasedIndex.getAllValuesWithKeyPrefix(FieldsIndex.KEY, "$entityTypeId|", project)
             .toMutableList()
             // Merge additional fields.
@@ -174,23 +145,17 @@ open class FieldCompletionCompletionProvider : CompletionProvider<CompletionPara
                     // we use special prefix that later is replaced by actual key from annotations.
                     name.contains(GENERAL_BASE_FIELD_KEY_PREFIX) -> keys[name.substringAfter("|")]
                     else -> name
-                }?.let {
-                    fields.add(Pair(drupalField.fieldType, it))
+                }?.let { fieldName ->
+                    result.addElement(
+                        PrioritizedLookupElement.withPriority(
+                            LookupElementBuilder.create(fieldName).withTypeText(drupalField.fieldType, true),
+                            priority
+                        )
+
+                    )
                 }
+
             }
-
-        classReference?.putUserData(fieldKey, Pair(hashCode, fields))
-        fields.forEach {
-            result.addElement(
-                PrioritizedLookupElement.withPriority(
-                    LookupElementBuilder.create(it.second).withTypeText(it.first, true),
-                    priority
-                )
-
-            )
-        }
-
-
     }
 
 }

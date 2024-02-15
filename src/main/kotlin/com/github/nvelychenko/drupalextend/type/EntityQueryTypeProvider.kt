@@ -79,7 +79,7 @@ class EntityQueryTypeProvider : PhpTypeProvider4 {
             return null
         }
 
-        return returnCachedType(project, "#$key$entityTypeId$END_KEY")
+        return PhpType().add("#$key$entityTypeId$END_KEY")
     }
 
     override fun complete(expression: String?, project: Project?): PhpType? {
@@ -90,16 +90,12 @@ class EntityQueryTypeProvider : PhpTypeProvider4 {
 
         val contentEntity = fileBasedIndex.getValue(ContentEntityIndex.KEY, entityTypeId, project)
         if (contentEntity != null) {
-            val type = PhpType().add(contentEntitySqlFactoryClass)
-            putTypeInCache(project, expression, type)
-            return type
+            return PhpType().add(contentEntitySqlFactoryClass)
         }
 
         val configEntity = fileBasedIndex.getValue(ConfigEntityIndex.KEY, entityTypeId, project)
         if (configEntity != null) {
-            val type = PhpType().add(configEntitySqlFactoryClass)
-            putTypeInCache(project, expression, type)
-            return type
+            return PhpType().add(configEntitySqlFactoryClass)
         }
 
         return null
