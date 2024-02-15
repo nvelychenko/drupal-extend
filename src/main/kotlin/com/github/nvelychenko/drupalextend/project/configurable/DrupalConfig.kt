@@ -49,6 +49,12 @@ class DrupalConfig(
                     .align(AlignX.RIGHT)
 
             }
+
+            row {
+                checkBox(DrupalExtendBundle.message("settings.drupal_extend.experimental_entity_reference_type_provider"))
+                    .comment(DrupalExtendBundle.message("settings.drupal_extend.experimental_entity_reference_type_provider_description"))
+                    .bindSelected(settings::isEntityReferenceTypeResolverEnabled)
+            }
         }
     }
 

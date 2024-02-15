@@ -1,30 +1,12 @@
-@file:Suppress("unused")
-
 package com.github.nvelychenko.drupalextend.type
 
 import com.intellij.openapi.project.Project
 import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.PhpClass
 import com.jetbrains.php.lang.psi.elements.PhpNamedElement
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.util.*
-import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
 
 private const val SIGNATURE_SPLIT_KEY = '\u3336'
 private const val SIGNATURE_HASH = '\u3337'
-
-private fun compressString(str: String): String {
-    val byteArrayOutputStream = ByteArrayOutputStream()
-    GZIPOutputStream(byteArrayOutputStream).bufferedWriter(Charsets.UTF_8).use { it.write(str) }
-    return Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray())
-}
-
-private fun decompressString(compressedStr: String): String {
-    val bytes = Base64.getDecoder().decode(compressedStr)
-    return GZIPInputStream(ByteArrayInputStream(bytes)).bufferedReader(Charsets.UTF_8).use { it.readText() }
-}
 
 fun compressSignature(string: String): String {
     return string.replace('|', SIGNATURE_SPLIT_KEY).replace('#', SIGNATURE_HASH)

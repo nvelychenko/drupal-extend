@@ -35,6 +35,7 @@ class EntityReferenceFieldTypeProvider : PhpTypeProvider4 {
         val project = psiElement.project
         if (
             !project.drupalExtendSettings.isEnabled
+            || !project.drupalExtendSettings.isEntityReferenceTypeResolverEnabled
             || DumbService.getInstance(project).isDumb
             || psiElement !is FieldReference
             || psiElement.name != "entity"
