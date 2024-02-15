@@ -21,6 +21,12 @@ class DrupalExtendSettings :
             state.isEnabled = value
         }
 
+    var isEntityReferenceTypeResolverEnabled: Boolean
+        get() = state.isEntityReferenceTypeResolverEnabled
+        set(value) {
+            state.isEntityReferenceTypeResolverEnabled = value
+        }
+
     var configDirectory: String
         get() = state.configDirectory ?: DEFAULT_CONFIG_SYNC_DIRECTORY
         set(value) {
@@ -31,6 +37,7 @@ class DrupalExtendSettings :
         // @todo Once we will implement balloon make it false by default
         var isEnabled: Boolean by property(true)
         var configDirectory by string()
+        var isEntityReferenceTypeResolverEnabled: Boolean by property(false)
     }
 
 }

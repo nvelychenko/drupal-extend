@@ -59,6 +59,7 @@
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.StaticContentEntityTypeProvider"/>
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.FieldItemListTypeProvider"/>
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityQueryTypeProvider"/>
+        <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityReferenceFieldTypeProvider"/>
     </extensions>
 
     <depends>com.jetbrains.php</depends>

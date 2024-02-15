@@ -46,16 +46,16 @@ class StaticContentEntityTypeProvider : PhpTypeProvider4 {
 
         if (!possibleMethods.containsKey(psiElement.name)) return null
 
-        return PhpType().add("#$key${psiElement.signature}$splitKey${psiElement.name}")
+        return PhpType().add("#$key${compressSignature(psiElement.signature)}$splitKey${psiElement.name}")
     }
 
-    override fun complete(expression: String?, project: Project?): PhpType? {
-        if (expression == null || project == null || !expression.contains(splitKey))
+    override fun complete(expression: String, project: Project): PhpType? {
+        if (!expression.contains(splitKey))
             return null
 
         val (signature, methodName) = expression.substring(2).split(splitKey)
 
-        for (partialSignature in signature.split("|")) {
+        for (partialSignature in decompressSignature(signature).split("|")) {
             if (partialSignature.startsWith("#M#C")) {
                 val contentEntity = fileBasedIndex.getValue(
                     ContentEntityFqnIndex.KEY,
