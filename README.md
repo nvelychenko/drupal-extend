@@ -8,28 +8,34 @@ The plugin is enhancement for your Drupal development experience.
 
 ## Features
 * Autocomplete for Content/Config Entities Storage (eck support)
+![Storage autocomplete example](./assets/storage_autocomplete.gif)
 
 * Fields autocomplete (default configuration directory points to the `config/sync` directory, you can change it inside plugin settings. <kbd>Settings</kbd> -> <kbd>PHP</kbd> -> <kbd>Drupal Extend</kbd>)
+  ![Fields autocomplete example](./assets/field_autocomplete.gif)
 
 * Field properties autocomplete e.g. `$node->get('field_user')->en|` it will autocomplete **entity** in this case.
 
-* Render element types autocomplete and their properties.
+* Autocomplete for render element types and their properties.
+  ![Render element types autocomplete](./assets/render_element_autocomplete.gif)
 
-* References for Storages and Fields (Ctrl + Click)
+* Storage reference provider
+  ![Storage reference](./assets/storage_reference_provider.gif)
 
-* Reference for Render element type.
+* Fields reference provider
+  ![Fields reference](./assets/field_reference.gif)
 
-* TypeProvider for `$storage->load/loadMultiple/loadByProperties` e.g. IDE will know what object(s) is returned by any of these methods.
+* Reference provider for Render element types and themes.
+  ![Reference provider for Render element types and themes](./assets/theme_render_element_reference.gif)
 
-* TypeProvider for static `Node::load/create/loadMultiple` methods
+* Entity Type Provider for `$storage->load/loadMultiple/loadByProperties`
+  ![Entity type provider](./assets/entity_type_provider.png)
 
-* TypeProvider for `\Drupal::service('database')->|`. So ide know what object is returned by this `::service` method.
+* Type Provider for static `Node::load/create/loadMultiple` methods
+
+* Type Provider for `\Drupal::service('')`
 
 * Autocomplete for `#theme`
-
-* Reference for themes (Ctrl + click)
-
-* Autocomplete for Render Element and its properties e.g. `#type' => 'checkbox', '#tit|`
+  ![Theme autocomplete example](./assets/theme_autocomplete.gif)
 
 * Render element type and theme highlight (Annotator)
 
