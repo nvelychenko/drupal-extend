@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2024-02-15
+
+### Added
+
+- Added entity reference type provider e.g. $node->get('field_entity_reference_reference')->entity
+
 ## [0.5.2] - 2024-02-08
 
 ### Added
@@ -111,7 +117,8 @@ Added:
 - Content entity provider was not working in certain circumstances
 - Deprecated usage of baseDir
 
-[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/nvelychenko/drupal-extend/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/nvelychenko/drupal-extend/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.4.1...v0.5.0

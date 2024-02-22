@@ -28,13 +28,14 @@ import com.jetbrains.php.lang.psi.elements.*
  *
  * $node->get('field_|
  * $node->set('field_|
+ * $node->hasField('field_|
  */
 open class FieldCompletionCompletionProvider : CompletionProvider<CompletionParameters>() {
     val fileBasedIndex: FileBasedIndex by lazy {
         FileBasedIndex.getInstance()
     }
 
-    protected open val methodsToAutocomplete = arrayOf("get", "set")
+    protected open val methodsToAutocomplete = arrayOf("get", "set", "hasField")
 
     open val priority = 10.0
 
