@@ -10,15 +10,9 @@
 <h2>Features</h2>
 
 <ul>
-    <li>Autocomplete for Content/Config Entity Storages</li>
-    <li>Fields autocomplete (for now config directory is hardcoded to the <b>config/sync</b>, project setting is WIP)</li>
-    <li>Fields property autocomplete e.g. <code>$node->get('author')->entity</code>. it will autocomplete <em>entity</em></li>
-    <li>References for Storages and Fields (Ctrl + Click)</li>
-    <li>Type provider for <code>load/loadMultiple/loadByProperties</code> storage methods e.g. <code>$node = $node_storage->load(1)</code> here it will know what is $node</li>
-    <li>Type provider for static methods e.g. <code>Node::load/loadMultiple/create</code></li>
-    <li>Type provider entity storages</li>
-    <li>Type provider for field item lists</li>
-    <li>Type provider for field items (WIP)</li>
+    <li>Autocomplete for Content/Config Entity Storages, fields, themes, render element types and their properties</li>
+    <li>References for Storages, RenderElements, themes and Fields (Ctrl + Click)</li>
+    <li>And much more. You can find list of all features <a href="https://github.com/nvelychenko/drupal-extend?tab=readme-ov-file#drupal-extend">here.</a></li>
 </ul>
 
 ]]></description>
@@ -60,6 +54,8 @@
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.FieldItemListTypeProvider"/>
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityQueryTypeProvider"/>
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.type.EntityReferenceFieldTypeProvider"/>
+
+        <libraryRoot id="drupal-extend" path="/metadata" runtime="false"/>
     </extensions>
 
     <depends>com.jetbrains.php</depends>

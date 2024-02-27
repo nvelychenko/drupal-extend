@@ -52,3 +52,7 @@ The plugin is enhancement for your Drupal development experience.
 
   Download the [latest release](https://github.com/nvelychenko/drupal-extend/releases/latest) and install it manually using
   <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
+
+## Troubleshooting
+
+- Entity type resolver has a chance to not work 10-20% of time if you are using `.phpstorm.meta.php` generated via `drush generate-metadata`. Plugin provides all features from that file, so you can safely delete it.
