@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [0.6.1] - 2024-02-27
+
+### Added
+
+- Field autocomplete in `hasField` method.
+- PhpStorm metadata file with all missing features provided by `drush generate phpstorm-metadata`, so now you can delete it without worries.
+
 ## [0.6.0] - 2024-02-15
 
 ### Added
@@ -117,7 +124,8 @@ Added:
 - Content entity provider was not working in certain circumstances
 - Deprecated usage of baseDir
 
-[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/nvelychenko/drupal-extend/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/nvelychenko/drupal-extend/compare/v0.5.0...v0.5.1
