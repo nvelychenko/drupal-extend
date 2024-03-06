@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+## [0.6.2] - 2024-03-06
+
+Temporary disabled `\Drupa::service `type resolving, because of changes made in the latest Symfony plugin version.
+
 ## [0.6.1] - 2024-02-27
 
 ### Added
@@ -124,7 +128,8 @@ Added:
 - Content entity provider was not working in certain circumstances
 - Deprecated usage of baseDir
 
-[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/nvelychenko/drupal-extend/compare/v0.5.1...v0.5.2
