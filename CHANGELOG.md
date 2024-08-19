@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.6.4] - 2024-08-19
+
+### Fixed
+
+- Compatibility with latest PHPStorm version
+
 ## [0.6.3] - 2024-05-20
 
 ### Fixed
@@ -135,7 +141,8 @@ Added:
 - Content entity provider was not working in certain circumstances
 - Deprecated usage of baseDir
 
-[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.3...HEAD
+[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.4...HEAD
+[0.6.4]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.3...v0.6.4
 [0.6.3]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.0...v0.6.1
