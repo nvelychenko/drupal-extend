@@ -51,3 +51,5 @@ fun getClassesFromSignature(signatures: String, project: Project): List<PhpClass
         .filterIsInstance<PhpClass>()
         .toList()
 }
+
+inline fun <R, U : R, T : R> T.letIf(condition: Boolean, block: (T) -> U): R = if (condition) block(this) else this
