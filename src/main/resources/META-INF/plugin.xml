@@ -22,6 +22,7 @@
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ConfigEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ThemeIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.FieldsIndex"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ComponentsIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.RenderElementIndex"/>
@@ -37,6 +38,8 @@
                                 implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalCompletionContributor"/>
         <completion.contributor order="last" language="PHP"
                                 implementationClass="com.github.nvelychenko.drupalextend.completion.FieldMagicMethodCompletionContributor"/>
+        <completion.contributor language="Twig" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalTwigCompletionContributor" />
+
 
         <projectConfigurable
                 instance="com.github.nvelychenko.drupalextend.project.configurable.DrupalConfig"
