@@ -34,6 +34,7 @@ class ComponentsIndex : FileBasedIndexExtension<String, SdcComponent>() {
             if (componentName != fileName.substringBefore(".component.yml")) return@DataIndexer map
 
             val props = YAMLKeyValueFinder("props.properties").findIn(yamlFile)
+            val themeOrModuleFile = findDirectoryWithInfoYmlFile(file)?.name ?: return@DataIndexer map
             val aggregatedProps = ArrayList<Props>()
 
             if (props is YAMLMapping) {
@@ -57,10 +58,28 @@ class ComponentsIndex : FileBasedIndexExtension<String, SdcComponent>() {
             val slots = YAMLKeyValueFinder("slots").findIn(yamlFile)
             val aggregatedSlots = ArrayList<Slots>()
 
-            map[componentName] = SdcComponent(aggregatedProps.toTypedArray(), aggregatedSlots.toTypedArray())
+            map["$themeOrModuleFile:$componentName"] = SdcComponent(aggregatedProps.toTypedArray(), aggregatedSlots.toTypedArray())
 
             map
         }
+    }
+
+    fun findDirectoryWithInfoYmlFile(startingPosition: VirtualFile): VirtualFile? {
+        var currentDirectory: VirtualFile? = startingPosition
+
+        while (currentDirectory != null) {
+            val currentDirectoryName = currentDirectory.name
+            val targetFileName = "$currentDirectoryName.info.yml"
+
+            val targetFile = currentDirectory.findChild(targetFileName)
+            if (targetFile != null && !targetFile.isDirectory) {
+                return currentDirectory
+            }
+
+            currentDirectory = currentDirectory.parent
+        }
+
+        return null
     }
 
     private val myKeyDescriptor: KeyDescriptor<String> = EnumeratorStringDescriptor()
