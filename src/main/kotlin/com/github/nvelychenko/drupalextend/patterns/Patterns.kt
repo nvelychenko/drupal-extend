@@ -271,6 +271,23 @@ object Patterns {
             ).withLanguage(phpLanguage)
     }
 
+    /**
+     * @sample
+     *
+     * #[Hook('here', 'here' ...)];
+     */
+    val HOOK_ATTRIBUTE_PARAMETER_STRING_LITERAL by lazy {
+        psiElement(LeafPsiElement::class.java)
+            .withParent(
+                psiElement(StringLiteralExpression::class.java)
+                    .withParent(
+                        psiElement(PhpElementTypes.PARAMETER_LIST)
+                            .withParent(psiElement(PhpElementTypes.ATTRIBUTE))
+                    )
+            )
+            .withLanguage(phpLanguage)
+    }
+
     private val STRING_LITERAL_IN_ARRAY_KEY_OR_ONLY_VALUE: Capture<StringLiteralExpression> by lazy {
         psiElement(StringLiteralExpression::class.java)
             .withParent(
