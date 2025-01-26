@@ -19,6 +19,9 @@ import com.jetbrains.php.lang.PhpLanguage
 class DrupalCompletionContributor : CompletionContributor() {
 
     init {
+        // $account->hasPermission('|
+        extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, PermissionsCompletionProvider())
+
         // \Drupal::entityTypeManager->getStorage('no|
         extend(CompletionType.BASIC, STRING_LITERAL_INSIDE_METHOD_PARAMETER, EntityStorageCompletionProvider())
 

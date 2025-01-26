@@ -13,5 +13,6 @@ fun clearPluginIndexes() {
         RenderElementIndex.KEY,
         ThemeIndex.KEY,
         LibrariesIndex.KEY,
+        PermissionsIndex.KEY,
     ).forEach { FileBasedIndex.getInstance().requestRebuild(it) }
 }
