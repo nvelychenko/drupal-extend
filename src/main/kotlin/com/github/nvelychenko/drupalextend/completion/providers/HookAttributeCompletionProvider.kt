@@ -1,7 +1,9 @@
 package com.github.nvelychenko.drupalextend.completion.providers
 
+import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.configurationStore.askToRestart
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
@@ -9,10 +11,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.childrenOfType
-import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.*
 import com.intellij.util.ProcessingContext
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.text.NameUtilCore
@@ -28,29 +30,32 @@ import com.jetbrains.php.lang.psi.elements.impl.MethodImpl
 import com.jetbrains.php.lang.psi.elements.impl.PhpAttributesListImpl
 import com.jetbrains.php.lang.psi.elements.impl.PhpClassImpl
 import com.jetbrains.php.lang.psi.stubs.indexes.PhpFunctionNameIndex
+import com.jetbrains.php.refactoring.PhpFunctionCodeGenerator
+import com.jetbrains.php.refactoring.PhpFunctionTemplate
 
-class HookAttributeCompletionProvider: CompletionProvider<CompletionParameters>() {
+class HookAttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
     public override fun addCompletions(
         completionParameters: CompletionParameters,
         processingContext: ProcessingContext,
         completionResultSet: CompletionResultSet
     ) {
         val leaf = completionParameters.originalPosition ?: return
+        val project = leaf.project
+
+        if (!project.drupalExtendSettings.isEnabled) return
+        val service = DrupalDataService.getInstance(project)
+        if (!service.isEnabled) return;
+        if (service.version == null) return;
+
         val element = leaf.parent as? StringLiteralExpression ?: return
         val parameterList = PsiTreeUtil.getParentOfType(leaf, ParameterList::class.java) ?: return;
         if (!parameterList.parameters.first().isEquivalentTo(element)) return;
         val attribute = PsiTreeUtil.getParentOfType(leaf, PhpAttribute::class.java) ?: return;
         if (attribute.fqn != "\\Drupal\\Core\\Hook\\Attribute\\Hook") return;
-        val project = completionParameters.originalFile.project
-        val service = DrupalDataService.getInstance(project)
-        if (!service.isEnabled) return;
-        if (service.version == null) return;
         val prefixMatcher: PrefixMatcher = completionResultSet.prefixMatcher
 
         val functionNamesFromIndex = getAllHooksInvocationsFromIndex(
-            prefixMatcher,
-            service.version,
-            project
+            prefixMatcher, service.version, project
         )
         val functionNamesFromDocs = getAllHooksInvocationsFromDocs(
             prefixMatcher,
@@ -66,9 +71,7 @@ class HookAttributeCompletionProvider: CompletionProvider<CompletionParameters>(
     }
 
     private fun getAllHooksInvocationsFromIndex(
-        prefixMatcher: PrefixMatcher,
-        version: DrupalVersion,
-        project: Project
+        prefixMatcher: PrefixMatcher, version: DrupalVersion, project: Project
     ): Collection<String> {
         val index = FileBasedIndex.getInstance()
         val indexKeys = index.getAllKeys(DrupalHooksIndex.KEY, project);
@@ -91,8 +94,7 @@ class HookAttributeCompletionProvider: CompletionProvider<CompletionParameters>(
     }
 
     private fun getAllHooksInvocationsFromDocs(
-        prefixMatcher: PrefixMatcher,
-        project: Project
+        prefixMatcher: PrefixMatcher, project: Project
     ): Collection<String> {
 
         val results = FileBasedIndex.getInstance().getAllKeys(PhpFunctionNameIndex.KEY, project)
@@ -110,36 +112,29 @@ class HookAttributeCompletionProvider: CompletionProvider<CompletionParameters>(
         return filtered
     }
 
-    class HookImplementationLookupElement(private val hookName: String): LookupElement() {
+    class HookImplementationLookupElement(private val hookName: String) : LookupElement() {
 
         override fun getLookupString(): String {
             return hookName;
         }
 
         override fun handleInsert(context: InsertionContext) {
-            super.handleInsert(context)
-
             val element = context.file.findElementAt(context.startOffset) ?: return
-            val attributeListImpl = PsiTreeUtil.getParentOfType(element, PhpAttributesListImpl::class.java) ?: return
+            val currentAttribute = PsiTreeUtil.getParentOfType(element, PhpAttribute::class.java) ?: return
+            val attributeListImpl = currentAttribute.parent
             // Do not insert method if hook attribute is on class.
-            if (attributeListImpl.parent is PhpClassImpl) return
-            // Ideally we prevent inserting the method if a second hook attribute is added to a function, but this will
-            // cause false positive checks if there is any hook function under, even separated by a new lines.
-//            val methodImpl = PsiTreeUtil.getParentOfType(attributeListImpl, MethodImpl::class.java);
-//            if (methodImpl != null) {
-//                val attributes = PsiTreeUtil.getChildrenOfType(methodImpl, PhpAttributesListImpl::class.java)
-//                var count = 0;
-//                attributes?.forEach {
-//                    it.childrenOfType<PhpAttribute>().forEach { attrClazz ->
-//                        if (attrClazz.fqn == "\\Drupal\\Core\\Hook\\Attribute\\Hook") {
-//                            count++
-//                        }
-//                        if (count > 1) {
-//                            return
-//                        }
-//                    }
-//                }
-//            }
+            val attributeParent = attributeListImpl.parent
+            if (attributeParent is PhpClassImpl) return
+            val method = attributeParent as MethodImpl
+
+            val secondLeaf = currentAttribute.nextLeaf()?.nextLeaf()
+            // Some piece of actual shit.
+            if (method.attributes.size > 1 && secondLeaf is PsiWhiteSpace
+                && Regex("\\R").findAll(secondLeaf.text).count() == 1
+                && secondLeaf.nextSibling is PhpAttributesList
+            ) {
+                return;
+            }
             addMethodImpl(context)
         }
 

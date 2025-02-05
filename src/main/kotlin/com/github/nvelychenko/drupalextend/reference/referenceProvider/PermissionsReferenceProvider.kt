@@ -1,5 +1,7 @@
 package com.github.nvelychenko.drupalextend.reference.referenceProvider
 
+import com.github.nvelychenko.drupalextend.completion.providers.PermissionsCompletionProvider
+import com.github.nvelychenko.drupalextend.completion.providers.PermissionsCompletionProvider.Companion.allowedMethods
 import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.reference.referenceType.PermissionsReference
@@ -9,30 +11,10 @@ import com.intellij.psi.PsiReferenceProvider
 import com.intellij.util.ProcessingContext
 import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.*
+import com.jetbrains.php.lang.psi.elements.impl.MethodImpl
 
 class PermissionsReferenceProvider : PsiReferenceProvider() {
 
-    companion object {
-        val allowedMethods: Map<String, List<String>> = mapOf(
-            "hasPermission" to listOf(
-                "\\Drupal\\Core\\Session\\AccountInterface",
-            ),
-            "grantPermission" to listOf(
-                "\\Drupal\\user\\RoleInterface",
-            ),
-            "revokePermission" to listOf(
-                "\\Drupal\\user\\RoleInterface",
-            ),
-            "allowedIfHasPermission" to listOf(
-                "\\Drupal\\Core\\Access\\AccessResult",
-                "\\Drupal\\user\\RoleInterface",
-            ),
-        )
-    }
-
-    /**
-     * Finds \Drupal::entityTypeManager()->getStorage('ENTITY_TYPE') and adds reference to it
-     */
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
         if (!element.project.drupalExtendSettings.isEnabled) {
             return emptyArray()
@@ -46,37 +28,17 @@ class PermissionsReferenceProvider : PsiReferenceProvider() {
 
         // Triggers only for the first parameter.
         val parameterList = element.parent as ParameterList
-        if (!parameterList.parameters.first().isEquivalentTo(element)) {
-            return emptyArray()
-        }
-
         val methodReference = parameterList.parent as MethodReference
-        if (!allowedMethods.containsKey(methodReference.name)) {
-            return emptyArray()
-        }
+        // Triggers only for the first parameter.
 
-        val methodResolvers = methodReference.multiResolve(false)
-        if (methodResolvers.isEmpty()) {
-            return emptyArray()
-        }
+        val methodName = methodReference.name
+        val position = allowedMethods.keys.find { it == methodName } ?: return emptyArray()
+        val methodsToCheck = allowedMethods[position]!!
+        val currentElementMethodFqn = (methodReference.resolve() as? MethodImpl)?.fqn ?: return emptyArray()
+        val methodToCheck = methodsToCheck.keys.find { it == currentElementMethodFqn } ?: return emptyArray()
+        if (parameterList.parameters[methodsToCheck[methodToCheck]!!]?.isEquivalentTo(element) == false) return emptyArray()
 
-        for (methodResolver in methodResolvers) {
-            val methodDefinition = methodResolver.element
-            if (methodDefinition !is Method) continue
-            val methodClass = methodDefinition.containingClass as PhpClass
-
-            for (allowedClass in allowedMethods[methodReference.name]!!) {
-                val allowedClassReferences =
-                    PhpIndex.getInstance(element.project)
-                        .getInterfacesByFQN(allowedClass).firstOrNull()
-                        ?: continue
-                if (!methodClass.isSuperInterfaceOf(allowedClassReferences)) continue
-
-                return arrayOf(PermissionsReference(element, permissionName))
-            }
-        }
-
-        return emptyArray()
+        return arrayOf(PermissionsReference(element, permissionName))
     }
 
 }

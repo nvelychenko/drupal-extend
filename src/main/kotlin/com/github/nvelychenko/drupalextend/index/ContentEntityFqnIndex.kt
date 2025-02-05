@@ -4,6 +4,7 @@ import com.github.nvelychenko.drupalextend.extensions.isValidForIndex
 import com.github.nvelychenko.drupalextend.index.types.ContentEntity
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
@@ -64,34 +65,46 @@ class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
         return DataIndexer { inputData ->
             val map = hashMapOf<String, ContentEntity>()
 
-            if (!inputData.project.drupalExtendSettings.isEnabled) return@DataIndexer map
-
+            if (!inputData.project.drupalExtendSettings.isEnabled || !inputData.isValidForIndex()) return@DataIndexer map
             val phpFile = inputData.psiFile as PhpFile
 
-            if (!inputData.isValidForIndex()) {
-                return@DataIndexer map
-            }
-
             val phpClass = PsiTreeUtil.findChildOfType(phpFile, PhpClass::class.java) ?: return@DataIndexer map
+            // Mmm. Omnomnom.
+            phpClass.attributes
+                .find { it.fqn == "\\Drupal\\Core\\Entity\\Attribute\\ContentEntityType" }
+                ?.arguments
+                ?.find { argument -> argument.name == "id" }
+                ?.argument
+                ?.value
+                ?.let { id ->
+                    val unquotedId = StringUtil.unquoteString(id)
+                    val interfaces = phpClass.implementsList.referenceElements
+                        .mapNotNull { it.fqn }
+                        .filter { !ignoredInterfaces.contains(it) }
 
-            if (phpClass.docComment !is PhpDocComment) return@DataIndexer map
+                    map[phpClass.fqn] = ContentEntity(unquotedId, phpClass.fqn)
 
-            val contentEntityTypes = (phpClass.docComment as PhpDocComment).getTagElementsByName("@ContentEntityType")
-            if (contentEntityTypes.isEmpty()) {
-                return@DataIndexer map
-            }
+                    for (immediateInterface in interfaces) {
+                        map[immediateInterface] = ContentEntity(unquotedId, phpClass.fqn)
+                    }
+                }
 
-            val contentEntityTypeDocText = contentEntityTypes[0].text
+            val docComment = phpClass.docComment
+            if (docComment is PhpDocComment && docComment.getTagElementsByName("@ContentEntityType").isNotEmpty()) {
+                val contentEntityTypes = docComment.getTagElementsByName("@ContentEntityType")
 
-            val id = getPhpDocParameter(contentEntityTypeDocText, "id") ?: return@DataIndexer map
-            val interfaces = phpClass.implementsList.referenceElements
-                .mapNotNull { it.fqn }
-                .filter { !ignoredInterfaces.contains(it) }
+                val contentEntityTypeDocText = contentEntityTypes[0].text
 
-            map[phpClass.fqn] = ContentEntity(id, phpClass.fqn)
+                val id = getPhpDocParameter(contentEntityTypeDocText, "id") ?: return@DataIndexer map
+                val interfaces = phpClass.implementsList.referenceElements
+                    .mapNotNull { it.fqn }
+                    .filter { !ignoredInterfaces.contains(it) }
 
-            for (immediateInterface in interfaces) {
-                map[immediateInterface] = ContentEntity(id, phpClass.fqn)
+                map[phpClass.fqn] = ContentEntity(id, phpClass.fqn)
+
+                for (immediateInterface in interfaces) {
+                    map[immediateInterface] = ContentEntity(id, phpClass.fqn)
+                }
             }
 
             map
@@ -108,7 +121,7 @@ class ContentEntityFqnIndex : FileBasedIndexExtension<String, ContentEntity>() {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 12
+    override fun getVersion(): Int = 13
 
     companion object {
         val KEY = ID.create<String, ContentEntity>("com.github.nvelychenko.drupalextend.index.content_entity_fqn")

@@ -13,8 +13,7 @@ import com.jetbrains.php.lang.PhpFileType
 import icons.DrupalIcons
 import org.jetbrains.yaml.YAMLFileType
 
-class PermissionsReference(element: PsiElement, val permissionName: String) :
-    PsiPolyVariantReferenceBase<PsiElement>(element) {
+class PermissionsReference(element: PsiElement, private val permissionName: String) : PsiPolyVariantReferenceBase<PsiElement>(element) {
 
     private val psiManager: PsiManager by lazy { PsiManager.getInstance(project) }
     private val project = element.project
@@ -28,7 +27,7 @@ class PermissionsReference(element: PsiElement, val permissionName: String) :
     override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
         if (!project.drupalExtendSettings.isEnabled) return emptyArray()
         val files = HashMap<String, VirtualFile>()
-        val processor = FileBasedIndex.ValueProcessor<String> { file, value -> files.put(value, file); true }
+        val processor = FileBasedIndex.ValueProcessor<String> { file, value -> files[value] = file; true }
 
         FileBasedIndex
             .getInstance()

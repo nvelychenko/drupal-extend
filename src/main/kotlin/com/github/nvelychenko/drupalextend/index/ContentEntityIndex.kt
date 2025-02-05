@@ -9,6 +9,7 @@ import com.github.nvelychenko.drupalextend.index.types.DrupalContentEntity
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -19,7 +20,7 @@ import com.intellij.util.io.KeyDescriptor
 import com.jetbrains.php.lang.PhpFileType
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment
 import com.jetbrains.php.lang.psi.PhpFile
-import com.jetbrains.php.lang.psi.elements.PhpClass
+import com.jetbrains.php.lang.psi.elements.*
 import kotlinx.serialization.serializer
 import org.jetbrains.yaml.YAMLFileType
 import org.jetbrains.yaml.psi.YAMLDocument
@@ -74,6 +75,8 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
 
     private fun processPhp(map: HashMap<String, DrupalContentEntity>, phpFile: PhpFile) {
         val phpClass = PsiTreeUtil.findChildOfType(phpFile, PhpClass::class.java) ?: return
+
+        processAttributes(map, phpClass)
         if (phpClass.docComment !is PhpDocComment) return
 
         val contentEntityTypes = (phpClass.docComment as PhpDocComment).getTagElementsByName("@ContentEntityType")
@@ -114,6 +117,63 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
         map[id] = DrupalContentEntity(id, phpClass.fqn, resolvedKeys, sqlStorageHandler)
     }
 
+    fun processAttributes(map: HashMap<String, DrupalContentEntity>, clazz: PhpClass) {
+        val attribute =
+            clazz.attributes.find { it.fqn == "\\Drupal\\Core\\Entity\\Attribute\\ContentEntityType" } ?: return
+        val resolvedKeys = hashMapOf<String, String>()
+        val rawId = attribute.arguments.find { it.name == "id" }?.argument?.value ?: return
+        val id = StringUtil.unquoteString(rawId)
+        processKeysInAttribute(resolvedKeys, "entity_keys", attribute)
+        processKeysInAttribute(resolvedKeys, "revision_metadata_keys", attribute)
+
+        var storage = "\\Drupal\\Core\\Entity\\Sql\\SqlContentEntityStorage"
+
+        attribute.arguments.find { it.name == "handlers" }
+            ?.argument?.argumentIndex
+            ?.let {
+                val value = attribute.parameters[it]
+                if (value is ArrayCreationExpression) {
+                    val storageValue = value.hashElements.find {
+                        val key = it.key
+                        key is StringLiteralExpression && key.contents == "storage"
+                    }
+                        ?.value
+
+                    if (storageValue is StringLiteralExpression) {
+                        storage = storageValue.contents
+                    }
+                    if (storageValue is ClassConstantReference) {
+                        val clazzSignature = storageValue.signature
+                            .split('|')
+                            .find { part -> part.contains("#K#C") && part.contains(".class") }
+
+                            if (clazzSignature != null) {
+                                storage = clazzSignature.substringAfter("#K#C").substringBefore(".class")
+                            }
+                    }
+                }
+            }
+
+        map[id] = DrupalContentEntity(id, clazz.fqn, resolvedKeys, storage)
+    }
+
+    fun processKeysInAttribute(resolvedKeys: HashMap<String, String>, name: String, attribute: PhpAttribute) {
+        attribute.arguments.find { it.name == name }
+            ?.argument?.argumentIndex
+            ?.let {
+                val value = attribute.parameters[it]
+                if (value is ArrayCreationExpression) {
+                    value.hashElements.map { element ->
+                        val key = element.key
+                        val arrayValue = element.value
+                        if (key is StringLiteralExpression && arrayValue is StringLiteralExpression) {
+                            resolvedKeys[key.contents] = arrayValue.contents
+                        }
+                    }
+                }
+            }
+    }
+
     override fun getKeyDescriptor(): KeyDescriptor<String> = myKeyDescriptor
 
     private val myDataExternalizer: DataExternalizer<DrupalContentEntity> =
@@ -131,7 +191,7 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 13
+    override fun getVersion(): Int = 14
 
     companion object {
         val KEY = ID.create<String, DrupalContentEntity>("com.github.nvelychenko.drupalextend.index.content_types")

@@ -61,11 +61,11 @@ class ThemeIndex : FileBasedIndexExtension<String, DrupalTheme>() {
         for (variable in themeHook.findVariablesByName(returnVariable.name)) {
             val assignment = PhpPsiUtil.getParentOfClass(variable, AssignmentExpression::class.java) ?: continue
 
-            val propertiesHash = assignment.variable as? ArrayCreationExpression ?: continue
+            val propertiesHash = assignment.value as? ArrayCreationExpression ?: continue
 
             // $theme['foo']
             val themeName =
-                ((assignment.value as? ArrayAccessExpression)?.index as? StringLiteralExpression)?.contents ?: continue
+                ((assignment.variable as? ArrayAccessExpression)?.index?.value as? StringLiteralExpression)?.contents ?: continue
 
             map[themeName] = DrupalTheme(themeName, getThemeVariables(propertiesHash), hookName)
         }

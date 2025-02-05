@@ -79,6 +79,20 @@ object Patterns {
             .withLanguage(phpLanguage)
     }
 
+    val ARRAY_KEY_INSIDE_ASSIGNMENT_EXPRESSION: Capture<StringLiteralExpression> by lazy {
+        psiElement(StringLiteralExpression::class.java)
+            .withParent(
+                psiElement(PhpElementTypes.ARRAY_INDEX)
+                    .withParent(
+                        psiElement(PhpElementTypes.ARRAY_ACCESS_EXPRESSION)
+                            .withParent(
+                                psiElement(PhpElementTypes.ASSIGNMENT_EXPRESSION)
+                            )
+                    )
+            )
+            .withLanguage(phpLanguage)
+    }
+
     val SIMPLE_FUNCTION: Capture<PsiElement> by lazy { psiElement(PhpElementTypes.FUNCTION).withLanguage(phpLanguage) }
 
     /**
@@ -243,7 +257,8 @@ object Patterns {
      * $build = [
      *   '#attached' => [
      *     'library' => [
-     *       '',
+     *       'here',
+     *         ↑
      *     ],
      *   ],
      * ];
