@@ -8,6 +8,7 @@ import com.github.nvelychenko.drupalextend.index.types.DrupalFieldType
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil.unquoteString
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -63,10 +64,8 @@ class FieldTypeIndex : FileBasedIndexExtension<String, DrupalFieldType>() {
         return DataIndexer { inputData ->
             val map = hashMapOf<String, DrupalFieldType>()
 
-            if (!inputData.project.drupalExtendSettings.isEnabled) return@DataIndexer map
-
             val phpFile = inputData.psiFile as PhpFile
-
+            if (!inputData.project.drupalExtendSettings.isEnabled) return@DataIndexer map
             if (!inputData.isValidForIndex()) return@DataIndexer map
 
             val phpClass = PsiTreeUtil.findChildOfType(phpFile, PhpClass::class.java) ?: return@DataIndexer map
@@ -75,20 +74,30 @@ class FieldTypeIndex : FileBasedIndexExtension<String, DrupalFieldType>() {
 
             var listClass = DUMMY_LIST_CLASS
             var hasEntityTypeAnnotation = false
-            val id = if (docComment is PhpDocComment) {
-                val fieldTypeDocs = docComment.getTagElementsByName("@FieldType")
-                if (fieldTypeDocs.isEmpty()) {
-                    listClass = DUMMY_LIST_CLASS
-                    phpClass.fqn
-                } else {
-                    hasEntityTypeAnnotation = true
 
-                    val fieldTypeDoc = fieldTypeDocs[0].text
-                    listClass = getPhpDocParameter(fieldTypeDoc, "list_class") ?: DUMMY_LIST_CLASS
-                    getPhpDocParameter(fieldTypeDoc, "id") ?: phpClass.fqn
+            var id = phpClass.attributes.find { it.fqn == "\\Drupal\\Core\\Field\\Attribute\\FieldType" }
+                ?.arguments?.find { it.name == "id" }?.argument?.value?.let {
+                    hasEntityTypeAnnotation = true
+                    unquoteString(it)
                 }
-            } else {
-                phpClass.fqn
+
+            // I beg you to refactor me
+            if (id == null) {
+                id = if (docComment is PhpDocComment) {
+                    val fieldTypeDocs = docComment.getTagElementsByName("@FieldType")
+                    if (fieldTypeDocs.isEmpty()) {
+                        listClass = DUMMY_LIST_CLASS
+                        phpClass.fqn
+                    } else {
+                        hasEntityTypeAnnotation = true
+
+                        val fieldTypeDoc = fieldTypeDocs[0].text
+                        listClass = getPhpDocParameter(fieldTypeDoc, "list_class") ?: DUMMY_LIST_CLASS
+                        getPhpDocParameter(fieldTypeDoc, "id") ?: phpClass.fqn
+                    }
+                } else {
+                    phpClass.fqn
+                }
             }
 
             val propertyDefinitionsMethod = phpClass.findOwnMethodByName("propertyDefinitions")
@@ -160,7 +169,7 @@ class FieldTypeIndex : FileBasedIndexExtension<String, DrupalFieldType>() {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 2
+    override fun getVersion(): Int = 3
 
     companion object {
         val index: FileBasedIndex by lazy {

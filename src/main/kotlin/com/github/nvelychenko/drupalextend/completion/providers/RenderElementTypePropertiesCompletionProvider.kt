@@ -21,6 +21,10 @@ class RenderElementTypePropertiesCompletionProvider : CompletionProvider<Complet
 
     private val fileBasedIndex by lazy { FileBasedIndex.getInstance() }
     private val insertHandler by lazy { RenderElementTypeInsertionHandler() }
+    private val renderElementClazzes = arrayOf(
+        "\\Drupal\\Core\\Render\\Element\\RenderElementBase",
+        "\\Drupal\\Core\\Render\\Element\\RenderElement",
+    )
 
     public override fun addCompletions(
         completionParameters: CompletionParameters,
@@ -53,7 +57,7 @@ class RenderElementTypePropertiesCompletionProvider : CompletionProvider<Complet
         PhpClassHierarchyUtils.processSuperClasses(elementClass, false, true) { phpClass ->
             fileBasedIndex.getValue(RenderElementIndex.KEY, phpClass.fqn, project)
                 ?.let { properties = arrayOf(*properties, *it.properties) }
-            if (phpClass.fqn == "\\Drupal\\Core\\Render\\Element\\RenderElement") {
+            if (renderElementClazzes.contains(phpClass.fqn)) {
                 return@processSuperClasses false
             }
             true

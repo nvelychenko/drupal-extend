@@ -2,8 +2,11 @@
 <idea-plugin>
 
 <extensions defaultExtensionNs="com.intellij">
-    <completion.contributor order="first" language="PHP"
-                            implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalHookContributor"/>
+    <completion.contributor language="PHP" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalHookContributor"/>
+    <codeInsight.lineMarkerProvider language="PHP" implementationClass="com.github.nvelychenko.drupalextend.lineMarker.DrupalHookImplLineMarkerProvider" />
+    <codeInsight.lineMarkerProvider language="PHP" implementationClass="com.github.nvelychenko.drupalextend.lineMarker.DrupalHookDocLineMarkerProvider" />
+
+    <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.HookAttributesIndex"/>
 </extensions>
 
 </idea-plugin>

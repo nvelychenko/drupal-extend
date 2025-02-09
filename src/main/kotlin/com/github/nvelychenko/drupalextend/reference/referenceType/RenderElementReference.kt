@@ -19,11 +19,7 @@ class RenderElementReference(element: PsiElement, private val renderElement: Ren
     override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
         if (!project.drupalExtendSettings.isEnabled) return emptyArray()
 
-        val renderElementClass =
-            phpIndex.getClassesByFQN(renderElement.typeClass).firstOrNull() ?: return emptyArray()
-        return renderElementClass.docComment?.getTagElementsByName("@${renderElement.renderElementType}")
-            ?.takeIf { it.isNotEmpty() }
-            ?.mapNotNull { it }
-            .let(::createResults)
+        val renderElementClass = phpIndex.getClassesByFQN(renderElement.typeClass).firstOrNull() ?: return emptyArray()
+        return createResults(renderElementClass)
     }
 }

@@ -13,6 +13,7 @@ import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
 import com.jetbrains.php.lang.PhpFileType
+import com.jetbrains.php.lang.psi.PhpFile
 import com.jetbrains.php.lang.psi.PhpPsiUtil
 import com.jetbrains.php.lang.psi.elements.*
 import com.jetbrains.php.lang.psi.elements.Function
@@ -28,20 +29,42 @@ class ThemeIndex : FileBasedIndexExtension<String, DrupalTheme>() {
 
             if (!inputData.project.drupalExtendSettings.isEnabled) return@DataIndexer map
             if (!inputData.isValidForIndex()) return@DataIndexer map
+            handleLegacyHooks(map, inputData)
+            handleHooks(map, inputData)
 
-            val fileName = inputData.fileName
-            val moduleName = fileName.substringBefore(".")
-            if (!fileName.endsWith(".module") && fileName != "theme.inc") {
-                return@DataIndexer map
+            return@DataIndexer map
+        }
+    }
+
+    private fun handleHooks(map: java.util.HashMap<String, DrupalTheme>, inputData: FileContent) {
+        val phpFile = inputData.psiFile as PhpFile
+        val clazz = PsiTreeUtil.findChildOfType(phpFile, PhpClass::class.java) ?: return
+
+        if (clazz.fqn == "\\Drupal\\Core\\Theme\\ThemeCommonElements") {
+            hookName = "commonElements"
+            val method = clazz.findMethodByName("commonElements") ?: return
+            val returnType = PsiTreeUtil.findChildOfType(method, PhpReturn::class.java)?.firstPsiChild
+            if (returnType is ArrayCreationExpression) {
+                processArrayCreationExpression(returnType, map)
             }
+        }
 
-            val finder = FunctionFinderInContext(arrayOf(moduleName + "_theme", "drupal_common_theme"), SIMPLE_FUNCTION)
-            val themeHook = finder.findIn(inputData.psiFile) ?: return@DataIndexer map
-            hookName = themeHook.name
+        if (!clazz.namespaceName.startsWith("\\Drupal\\") || !clazz.namespaceName.endsWith("\\Hook\\")) return
 
-            when (val returnType = PsiTreeUtil.findChildOfType(themeHook, PhpReturn::class.java)?.firstPsiChild) {
+        val attributes = PsiTreeUtil.findChildrenOfType(clazz, PhpAttribute::class.java)
+
+        for (attribute in attributes) {
+            if (attribute.fqn != "\\Drupal\\Core\\Hook\\Attribute\\Hook") continue
+            val hookNamie = attribute.parameters.first() ?: continue
+
+            if (hookNamie !is StringLiteralExpression || hookNamie.contents != "theme") continue
+
+            val holder = attribute.parent.parent as? Method ?: continue
+            hookName = holder.name
+
+            when (val returnType = PsiTreeUtil.findChildOfType(holder, PhpReturn::class.java)?.firstPsiChild) {
                 is ArrayCreationExpression -> processArrayCreationExpression(returnType, map)
-                is Variable -> processVariable(returnType, themeHook, map)
+                is Variable -> processVariable(returnType, holder, map)
                 is FunctionReference -> {
                     if (returnType.name == "array_merge") {
                         returnType.parameters.forEach {
@@ -52,8 +75,33 @@ class ThemeIndex : FileBasedIndexExtension<String, DrupalTheme>() {
                     }
                 }
             }
+        }
 
-            return@DataIndexer map
+    }
+
+    private fun handleLegacyHooks(map: HashMap<String, DrupalTheme>, inputData: FileContent) {
+        val fileName = inputData.fileName
+        val moduleName = fileName.substringBefore(".")
+        if (!fileName.endsWith(".module") && fileName != "theme.inc") {
+            return
+        }
+
+        val finder = FunctionFinderInContext(arrayOf(moduleName + "_theme", "drupal_common_theme"), SIMPLE_FUNCTION)
+        val themeHook = finder.findIn(inputData.psiFile) ?: return
+        hookName = themeHook.name
+
+        when (val returnType = PsiTreeUtil.findChildOfType(themeHook, PhpReturn::class.java)?.firstPsiChild) {
+            is ArrayCreationExpression -> processArrayCreationExpression(returnType, map)
+            is Variable -> processVariable(returnType, themeHook, map)
+            is FunctionReference -> {
+                if (returnType.name == "array_merge") {
+                    returnType.parameters.forEach {
+                        if (it is ArrayCreationExpression) {
+                            processArrayCreationExpression(it, map)
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -120,7 +168,7 @@ class ThemeIndex : FileBasedIndexExtension<String, DrupalTheme>() {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 0
+    override fun getVersion(): Int = 1
 
     companion object {
         val KEY = ID.create<String, DrupalTheme>("com.github.nvelychenko.drupalextend.index.hook_themes")

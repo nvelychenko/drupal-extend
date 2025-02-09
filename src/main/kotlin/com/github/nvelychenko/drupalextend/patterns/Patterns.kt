@@ -95,6 +95,13 @@ object Patterns {
 
     val SIMPLE_FUNCTION: Capture<PsiElement> by lazy { psiElement(PhpElementTypes.FUNCTION).withLanguage(phpLanguage) }
 
+    val FUNCTION_OR_METHOD by lazy {
+        or(
+            psiElement(PhpElementTypes.FUNCTION).withLanguage(phpLanguage),
+            psiElement(PhpElementTypes.CLASS_METHOD).withLanguage(phpLanguage),
+        )
+    }
+
     /**
      * ['string' => 'string']
      *                  ↑

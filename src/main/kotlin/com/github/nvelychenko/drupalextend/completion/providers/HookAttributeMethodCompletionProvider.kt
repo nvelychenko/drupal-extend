@@ -3,6 +3,9 @@ package com.github.nvelychenko.drupalextend.completion.providers
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.impl.TextExpression
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
@@ -10,33 +13,31 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.nextLeaf
+import com.intellij.psi.util.PsiUtilBase
+import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
 import com.intellij.util.ProcessingContext
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.text.NameUtilCore
 import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.codeInsight.PhpCodeInsightUtil
-import com.jetbrains.php.completion.insert.PhpInsertHandlerUtil
 import com.jetbrains.php.drupal.DrupalVersion
 import com.jetbrains.php.drupal.hooks.DrupalHooksIndex
 import com.jetbrains.php.drupal.settings.DrupalDataService
 import com.jetbrains.php.lang.psi.PhpCodeEditUtil
+import com.jetbrains.php.lang.psi.PhpGroupUseElement.PhpUseKeyword
 import com.jetbrains.php.lang.psi.PhpPsiUtil
 import com.jetbrains.php.lang.psi.elements.*
 import com.jetbrains.php.lang.psi.elements.Function
-import com.jetbrains.php.lang.psi.elements.impl.MethodImpl
 import com.jetbrains.php.lang.psi.elements.impl.ParameterListImpl
-import com.jetbrains.php.lang.psi.elements.impl.PhpClassImpl
 import com.jetbrains.php.lang.psi.resolve.types.PhpType
 import com.jetbrains.php.lang.psi.stubs.indexes.PhpFunctionNameIndex
 import com.jetbrains.php.refactoring.PhpAliasImporter
 
-class HookAttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
+class HookAttributeMethodCompletionProvider : CompletionProvider<CompletionParameters>() {
     public override fun addCompletions(
         completionParameters: CompletionParameters,
         processingContext: ProcessingContext,
@@ -50,26 +51,25 @@ class HookAttributeCompletionProvider : CompletionProvider<CompletionParameters>
         if (!service.isEnabled) return
         if (service.version == null) return
 
-        val element = leaf.parent as? StringLiteralExpression ?: return
-        val parameterList = PsiTreeUtil.getParentOfType(leaf, ParameterList::class.java) ?: return
-        if (!parameterList.parameters.first().isEquivalentTo(element)) return
-        val attribute = PsiTreeUtil.getParentOfType(leaf, PhpAttribute::class.java) ?: return
-        if (attribute.fqn != "\\Drupal\\Core\\Hook\\Attribute\\Hook") return
-        val prefixMatcher: PrefixMatcher = completionResultSet.prefixMatcher
+        val clazz = PsiTreeUtil.getParentOfType(leaf, PhpClass::class.java) ?: return
+        // Should be Drupal\module\Hook
+        if (!clazz.namespaceName.startsWith("\\Drupal\\") || !clazz.namespaceName.endsWith("\\Hook\\")) {
+            return
+        }
 
-        val functionNamesFromIndex = getAllHooksInvocationsFromIndex(
-            prefixMatcher, service.version, project
-        )
-        val functionNamesFromDocs = getAllHooksInvocationsFromDocs(
-            prefixMatcher,
-            project,
-        )
+        val prefixMatcher: PrefixMatcher = completionResultSet.prefixMatcher
+        val functionNamesFromIndex = getAllHooksInvocationsFromIndex(prefixMatcher, service.version, project)
+        val functionNamesFromDocs = getAllHooksInvocationsFromDocs(prefixMatcher, project)
+
         val hookNames: HashSet<String> = HashSet()
         hookNames.addAll(functionNamesFromIndex)
         hookNames.addAll(functionNamesFromDocs)
 
         for (name in hookNames) {
-            completionResultSet.addElement(HookImplementationLookupElement(name))
+            completionResultSet.addElement(
+                LookupElementBuilder.create(name).withBoldness(true)
+                    .withInsertHandler(MyInsertHandler.INSTANCE)
+            )
         }
     }
 
@@ -115,42 +115,27 @@ class HookAttributeCompletionProvider : CompletionProvider<CompletionParameters>
         return filtered
     }
 
-    class HookImplementationLookupElement(private val hookName: String) : LookupElement() {
-
-        override fun getLookupString(): String {
-            return hookName
+    class MyInsertHandler : InsertHandler<LookupElement> {
+        companion object {
+            val INSTANCE = MyInsertHandler()
         }
 
-        override fun handleInsert(context: InsertionContext) {
-            val element = context.file.findElementAt(context.startOffset) ?: return
-            val currentAttribute = PsiTreeUtil.getParentOfType(element, PhpAttribute::class.java) ?: return
-            val attributeListImpl = currentAttribute.parent
-            // Do not insert method if hook attribute is on class.
-            val attributeParent = attributeListImpl.parent
-            if (attributeParent is PhpClassImpl) return
-            val method = attributeParent as MethodImpl
-
-            val secondLeaf = currentAttribute.nextLeaf()?.nextLeaf()
-            // Some piece of actual shit.
-            val onlyWhiteSpace = secondLeaf is PsiWhiteSpace && Regex("\\R").findAll(secondLeaf.text).count() == 1
-            if (
-                (method.attributes.size > 1 && onlyWhiteSpace && secondLeaf?.nextSibling is PhpAttributesList)
-                || (onlyWhiteSpace && secondLeaf?.nextSibling?.parent is Method)
-            ) {
-                return
-            }
-
-            addMethodImpl(context, currentAttribute)
-        }
-
-        private fun addMethodImpl(context: InsertionContext, attribute: PhpAttribute) {
+        override fun handleInsert(context: InsertionContext, item: LookupElement) {
             val editor = context.editor
             val file: PsiFile = context.file
+            val parentElement = PsiUtilBase.getElementAtCaret(editor)?.parent ?: return
+
+            val offset = if (parentElement is Method) {
+                context.document.deleteString(parentElement.startOffset, parentElement.endOffset)
+                parentElement.startOffset
+            } else {
+                context.document.deleteString(context.startOffset, context.tailOffset)
+                context.startOffset
+            }
             val project = editor.project ?: return
             val targetClass: PhpClass = PhpCodeEditUtil.findClassAtCaret(editor, file) ?: return
-            val element = context.file.findElementAt(context.startOffset) ?: return
             val doc: Document = editor.document
-            val attributeList = PsiTreeUtil.getParentOfType(element, PhpAttributesList::class.java) ?: return
+            val hookName = item.lookupString
 
             val docManager = PsiDocumentManager.getInstance(project)
 
@@ -184,22 +169,33 @@ class HookAttributeCompletionProvider : CompletionProvider<CompletionParameters>
             val parameterListText = parameterList?.text ?: ""
 
             val functionName = convertToCamelCaseString(hookName)
-            val offset = attributeList.nextSibling.startOffset
-            val template = "\npublic function $functionName($parameterListText) {\n}"
 
-            editor.caretModel.moveToOffset(offset, true)
+            val templateManager = TemplateManager.getInstance(project)
+            val templatie = templateManager.createTemplate("", "")
+            templatie.addTextSegment("/**\nImplements hook_$hookName().\n*/ #[Hook('$hookName')]\npublic function ")
+            templatie.addVariable(TextExpression(functionName), true)
+            templatie.addTextSegment("($parameterListText) {\n    ")
+            templatie.addVariable(TextExpression("// @todo Implement."), true)
+            templatie.addTextSegment("\n}")
+
+            editor.caretModel.moveToOffset(offset)
             docManager.commitDocument(doc)
-            val rangeMarker: RangeMarker = editor.document.createRangeMarker(offset + 1, offset + 1)
-            rangeMarker.isGreedyToRight = false
-
-            PhpInsertHandlerUtil.insertStringAtCaret(editor, template)
-            CodeStyleManager.getInstance(project).reformatText(file, offset, rangeMarker.endOffset)
+            val rangeMarker: RangeMarker = editor.document.createRangeMarker(offset, offset)
+            rangeMarker.isGreedyToRight = true
+            templateManager.startTemplate(editor, templatie)
 
             val scope = PhpCodeInsightUtil.findScopeForUseOperator(targetClass) ?: return
 
             classesToImport.forEach {
-                PhpAliasImporter.insertUseStatement(it, scope)
+                val importName = PhpCodeInsightUtil.findImportedName(scope, it, PhpUseKeyword.CLASS)
+                if (importName == null) {
+                    PhpAliasImporter.insertUseStatement(it, scope)
+                }
             }
+
+            CodeStyleManager.getInstance(project).reformatText(file, rangeMarker.startOffset, rangeMarker.endOffset + 1)
+            docManager.commitDocument(doc)
+            CodeStyleManager.getInstance(project).reformatText(file, rangeMarker.startOffset, rangeMarker.endOffset + 1)
         }
 
         private fun getDescriptiveFunctionByHookName(hookName: String, project: Project): Function? {

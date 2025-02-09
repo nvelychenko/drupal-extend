@@ -1,15 +1,12 @@
 package com.github.nvelychenko.drupalextend.reference.referenceProvider
 
-import com.github.nvelychenko.drupalextend.completion.providers.PermissionsCompletionProvider
 import com.github.nvelychenko.drupalextend.completion.providers.PermissionsCompletionProvider.Companion.allowedMethods
-import com.github.nvelychenko.drupalextend.extensions.isSuperInterfaceOf
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.reference.referenceType.PermissionsReference
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceProvider
 import com.intellij.util.ProcessingContext
-import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.*
 import com.jetbrains.php.lang.psi.elements.impl.MethodImpl
 

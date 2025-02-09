@@ -117,7 +117,7 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
         map[id] = DrupalContentEntity(id, phpClass.fqn, resolvedKeys, sqlStorageHandler)
     }
 
-    fun processAttributes(map: HashMap<String, DrupalContentEntity>, clazz: PhpClass) {
+    private fun processAttributes(map: HashMap<String, DrupalContentEntity>, clazz: PhpClass) {
         val attribute =
             clazz.attributes.find { it.fqn == "\\Drupal\\Core\\Entity\\Attribute\\ContentEntityType" } ?: return
         val resolvedKeys = hashMapOf<String, String>()
@@ -133,8 +133,8 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
             ?.let {
                 val value = attribute.parameters[it]
                 if (value is ArrayCreationExpression) {
-                    val storageValue = value.hashElements.find {
-                        val key = it.key
+                    val storageValue = value.hashElements.find { current ->
+                        val key = current.key
                         key is StringLiteralExpression && key.contents == "storage"
                     }
                         ?.value
@@ -157,7 +157,7 @@ class ContentEntityIndex : FileBasedIndexExtension<String, DrupalContentEntity>(
         map[id] = DrupalContentEntity(id, clazz.fqn, resolvedKeys, storage)
     }
 
-    fun processKeysInAttribute(resolvedKeys: HashMap<String, String>, name: String, attribute: PhpAttribute) {
+    private fun processKeysInAttribute(resolvedKeys: HashMap<String, String>, name: String, attribute: PhpAttribute) {
         attribute.arguments.find { it.name == name }
             ?.argument?.argumentIndex
             ?.let {

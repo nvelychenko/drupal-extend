@@ -5,7 +5,7 @@ import com.github.nvelychenko.drupalextend.index.ThemeIndex
 import com.github.nvelychenko.drupalextend.index.types.DrupalTheme
 import com.github.nvelychenko.drupalextend.patterns.Patterns.ARRAY_KEY_INSIDE_ASSIGNMENT_EXPRESSION
 import com.github.nvelychenko.drupalextend.patterns.Patterns.ARRAY_KEY_WITH_ARRAY_CREATION_EXPRESSION
-import com.github.nvelychenko.drupalextend.patterns.Patterns.SIMPLE_FUNCTION
+import com.github.nvelychenko.drupalextend.patterns.Patterns.FUNCTION_OR_METHOD
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.yml.FunctionFinderInContext
 import com.github.nvelychenko.drupalextend.util.yml.StringFinderInContext
@@ -65,7 +65,7 @@ class ThemeElementReference(element: PsiElement, private val theme: DrupalTheme)
 
         val file = list?.findPsiFile(project) ?: return null
 
-        val method = FunctionFinderInContext(arrayOf(theme.hookName), SIMPLE_FUNCTION).findIn(file) ?: return null
+        val method = FunctionFinderInContext(arrayOf(theme.hookName), FUNCTION_OR_METHOD).findIn(file) ?: return null
         return stringFinder.findIn(method)?.let { BaseNavigationItem(it, it.text.replace(Regex("[\"']"), ""), DrupalIcons.HASH_ICON) }
     }
 

@@ -10,6 +10,7 @@ import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.getPhpDocParameter
 import com.github.nvelychenko.drupalextend.util.yml.StringFinderInContext
 import com.github.nvelychenko.drupalextend.util.yml.YAMLKeyValueFinder
+import com.intellij.openapi.util.text.StringUtil.unquoteString
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -252,6 +253,12 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
             return false
         }
 
+        val attribute = phpClass.attributes.find { it.fqn == "\\Drupal\\Core\\Entity\\Attribute\\ContentEntityType" }
+
+        if (attribute != null) {
+            return true
+        }
+
         val docComment = phpClass.docComment
         if (docComment !is PhpDocComment) {
             return ExtendableContentEntityRelatedClasses.hasClass(phpClass.fqn)
@@ -265,6 +272,13 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
     }
 
     private fun getEntityTypeName(phpClass: PhpClass): String? {
+        val attributeId = phpClass.attributes.find { it.fqn == "\\Drupal\\Core\\Entity\\Attribute\\ContentEntityType" }
+            ?.arguments?.find { it.name == "id" }?.argument?.value?.let { unquoteString(it) }
+
+        if (attributeId != null) {
+            return attributeId
+        }
+
         val docComment = phpClass.docComment
         if (docComment !is PhpDocComment) {
             return phpClass.fqn
@@ -290,7 +304,7 @@ class FieldsIndex : FileBasedIndexExtension<String, DrupalField>() {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 11
+    override fun getVersion(): Int = 12
 
     companion object {
         val KEY = ID.create<String, DrupalField>("com.github.nvelychenko.drupalextend.index.fields")

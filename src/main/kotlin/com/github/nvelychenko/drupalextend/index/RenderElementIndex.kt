@@ -6,6 +6,7 @@ import com.github.nvelychenko.drupalextend.index.dataExternalizer.SerializedObje
 import com.github.nvelychenko.drupalextend.index.types.RenderElementType
 import com.github.nvelychenko.drupalextend.index.types.RenderElementType.RenderElementTypeProperty
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
@@ -35,7 +36,9 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
 
             val specialClasses = arrayOf(
                 "\\Drupal\\Core\\Render\\Element\\FormElement",
+                "\\Drupal\\Core\\Render\\Element\\FormElementBase",
                 "\\Drupal\\Core\\Render\\Element\\RenderElement",
+                "\\Drupal\\Core\\Render\\Element\\RenderElementBase",
             )
 
             val docComment = phpClass.docComment ?: return@DataIndexer map
@@ -71,12 +74,31 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
         docCommentString: String
     ) {
         val docComment = phpClass.docComment!!
-        var renderElement = docComment.getTagElementsByName("@RenderElement").firstOrNull()
         var type = "RenderElement"
 
-        if (renderElement == null) {
-            renderElement = docComment.getTagElementsByName("@FormElement").firstOrNull() ?: return
-            type = "FormElement"
+        var renderElementIdId = phpClass.attributes
+            .find {
+                val fqn = it.fqn
+                val isForm = fqn == "\\Drupal\\Core\\Render\\Attribute\\FormElement"
+                val isRender = fqn == "\\Drupal\\Core\\Render\\Attribute\\RenderElement"
+
+                if (isForm) {
+                    type = "FormElement"
+                }
+
+                isForm || isRender
+            }
+            ?.arguments?.first()?.argument?.value?.let { StringUtil.unquoteString(it) }
+
+        if (renderElementIdId == null) {
+            var renderElement = docComment.getTagElementsByName("@RenderElement").firstOrNull()
+
+            if (renderElement == null) {
+                renderElement = docComment.getTagElementsByName("@FormElement").firstOrNull() ?: return
+                type = "FormElement"
+            }
+
+            renderElementIdId = renderElement.text.substringAfter('"').substringBefore('"')
         }
 
         val getInfoMethod = phpClass.findOwnMethodByName("getInfo") ?: return
@@ -108,8 +130,6 @@ class RenderElementIndex : FileBasedIndexExtension<String, RenderElementType>() 
         if (docCommentString.contains(" * - #")) {
             parameters = getAdditionalParametersFromDoc(docCommentString, 10.0) + parameters
         }
-
-        val renderElementIdId = renderElement.text.substringAfter('"').substringBefore('"')
 
         map[renderElementIdId] = RenderElementType(renderElementIdId, phpClass.fqn, parameters, type)
     }
