@@ -10,7 +10,7 @@
 <h2>Features</h2>
 
 <ul>
-    <li>Autocomplete for Content/Config Entity Storages, fields, themes, render element types and their properties</li>
+    <li>Autocomplete for Content/Config Entity Storages, fields, themes, attribute hooks, render element types and their properties</li>
     <li>References for Storages, RenderElements, themes and Fields (Ctrl + Click)</li>
     <li>And much more. You can find list of all features <a href="https://github.com/nvelychenko/drupal-extend?tab=readme-ov-file#drupal-extend">here.</a></li>
 </ul>
