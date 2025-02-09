@@ -16,7 +16,7 @@ version = providers.gradleProperty("pluginVersion").get()
 
 // Set the JVM language level used to build the project.
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 
 // Configure project's dependencies
@@ -49,7 +49,6 @@ dependencies {
         zipSigner()
         testFramework(TestFrameworkType.Platform)
     }
-    implementation(kotlin("stdlib-jdk8"))
 }
 
 idea {
