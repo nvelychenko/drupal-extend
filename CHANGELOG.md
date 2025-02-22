@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+## [0.6.6] - 2025-02-22
+
+### Added
+
+- Attribute hooks autocomplete and line marker 🕺
+- Permissions autocomplete
+- Theme reference provider for files
+- Attributes support for content/config entities, fields, themes, render/form elements.
+
 ## [0.6.5] - 2025-02-09
 
 ### Added
@@ -150,7 +159,8 @@ Added:
 - Content entity provider was not working in certain circumstances
 - Deprecated usage of baseDir
 
-[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.5...HEAD
+[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.6...HEAD
+[0.6.6]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.5...v0.6.6
 [0.6.5]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.4...v0.6.5
 [0.6.4]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.3...v0.6.4
 [0.6.3]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.2...v0.6.3
