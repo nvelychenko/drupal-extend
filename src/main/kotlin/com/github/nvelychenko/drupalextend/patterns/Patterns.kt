@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.jetbrains.php.lang.PhpLanguage
 import com.jetbrains.php.lang.lexer.PhpTokenTypes
 import com.jetbrains.php.lang.parser.PhpElementTypes
+import com.jetbrains.php.lang.parser.PhpStubElementTypes
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
 object Patterns {
@@ -93,12 +94,12 @@ object Patterns {
             .withLanguage(phpLanguage)
     }
 
-    val SIMPLE_FUNCTION: Capture<PsiElement> by lazy { psiElement(PhpElementTypes.FUNCTION).withLanguage(phpLanguage) }
+    val SIMPLE_FUNCTION: Capture<PsiElement> by lazy { psiElement(PhpStubElementTypes.FUNCTION).withLanguage(phpLanguage) }
 
     val FUNCTION_OR_METHOD by lazy {
         or(
-            psiElement(PhpElementTypes.FUNCTION).withLanguage(phpLanguage),
-            psiElement(PhpElementTypes.CLASS_METHOD).withLanguage(phpLanguage),
+            psiElement(PhpStubElementTypes.FUNCTION).withLanguage(phpLanguage),
+            psiElement(PhpStubElementTypes.CLASS_METHOD).withLanguage(phpLanguage),
         )
     }
 
@@ -221,7 +222,7 @@ object Patterns {
                                 psiElement(PhpElementTypes.ARRAY_ACCESS_EXPRESSION)
                                     .withChild(
                                         psiElement(PhpElementTypes.ARRAY_ACCESS_EXPRESSION)
-                                            .withChild(psiElement(PhpElementTypes.VARIABLE))
+                                            .withChild(psiElement(PhpStubElementTypes.VARIABLE))
                                     )
                             )
                     )
@@ -304,7 +305,7 @@ object Patterns {
                 psiElement(StringLiteralExpression::class.java)
                     .withParent(
                         psiElement(PhpElementTypes.PARAMETER_LIST)
-                            .withParent(psiElement(PhpElementTypes.ATTRIBUTE))
+                            .withParent(psiElement(PhpStubElementTypes.ATTRIBUTE))
                     )
             )
             .withLanguage(phpLanguage)
