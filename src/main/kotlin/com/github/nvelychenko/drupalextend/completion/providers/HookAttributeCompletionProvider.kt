@@ -15,7 +15,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.nextLeaf
-import com.intellij.psi.util.startOffset
 import com.intellij.util.ProcessingContext
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.text.NameUtilCore
@@ -184,7 +183,7 @@ class HookAttributeCompletionProvider : CompletionProvider<CompletionParameters>
             val parameterListText = parameterList?.text ?: ""
 
             val functionName = convertToCamelCaseString(hookName)
-            val offset = attributeList.nextSibling.startOffset
+            val offset = attributeList.nextSibling.textRange.startOffset
             val template = "\npublic function $functionName($parameterListText) {\n}"
 
             editor.caretModel.moveToOffset(offset, true)

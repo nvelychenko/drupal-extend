@@ -17,8 +17,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
-import com.intellij.psi.util.endOffset
-import com.intellij.psi.util.startOffset
 import com.intellij.util.ProcessingContext
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.text.NameUtilCore
@@ -126,8 +124,8 @@ class HookAttributeMethodCompletionProvider : CompletionProvider<CompletionParam
             val parentElement = PsiUtilBase.getElementAtCaret(editor)?.parent ?: return
 
             val offset = if (parentElement is Method) {
-                context.document.deleteString(parentElement.startOffset, parentElement.endOffset)
-                parentElement.startOffset
+                context.document.deleteString(parentElement.textRange.startOffset, parentElement.textRange.endOffset)
+                parentElement.textRange.startOffset
             } else {
                 context.document.deleteString(context.startOffset, context.tailOffset)
                 context.startOffset
