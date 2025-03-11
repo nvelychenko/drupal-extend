@@ -40,6 +40,9 @@ The plugin is enhancement for your Drupal development experience.
 * Render element type and theme highlight (Annotator)
 
 * Fields autocomplete in content entity queries and entity storages autocomplete in `\Drupal::entityQuery()`
+* Hooks autocomplete and linemarker
+![hooks](https://github.com/user-attachments/assets/1a42dec5-a09a-4039-9040-29bc81adb878)
+
 
 ## Installation
 
