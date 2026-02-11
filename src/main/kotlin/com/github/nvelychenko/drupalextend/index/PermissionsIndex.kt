@@ -41,9 +41,12 @@ class PermissionsIndex : FileBasedIndexExtension<String, String>() {
                 inputData.file.name.endsWith(".yml") &&
                 inputData.isInConfigurationDirectory()
             ) {
-                val permissionsSequence = YAMLKeyValueFinder("permissions")
-                    .findIn(yamlFile)
-                    ?.value as YAMLSequence
+                val value = YAMLKeyValueFinder("permissions").findIn(yamlFile)?.value
+                val permissionsSequence = when (value) {
+                    is YAMLSequence -> value
+                    is YAMLMapping -> YAMLSequenceImpl(yamlFile.node) // handle empty hash case
+                    else -> YAMLSequenceImpl(yamlFile.node) // handle null or other cases
+                }
                 for (permissionSequenceItem in permissionsSequence.items) {
                     permissionSequenceItem as YAMLSequenceItem
                     map[(permissionSequenceItem.value as YAMLQuotedTextImpl).textValue] = "permissions"
