@@ -14,9 +14,9 @@ import com.intellij.util.io.KeyDescriptor
 import org.jetbrains.yaml.YAMLFileType
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLMapping
+import org.jetbrains.yaml.psi.YAMLScalar
 import org.jetbrains.yaml.psi.YAMLSequence
 import org.jetbrains.yaml.psi.YAMLSequenceItem
-import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl
 
 class PermissionsIndex : FileBasedIndexExtension<String, String>() {
     override fun getIndexer(): DataIndexer<String, String, FileContent> {
@@ -43,10 +43,10 @@ class PermissionsIndex : FileBasedIndexExtension<String, String>() {
             ) {
                 val permissionsSequence = YAMLKeyValueFinder("permissions")
                     .findIn(yamlFile)
-                    ?.value as YAMLSequence
+                    ?.value as? YAMLSequence ?: return@DataIndexer map
                 for (permissionSequenceItem in permissionsSequence.items) {
                     permissionSequenceItem as YAMLSequenceItem
-                    map[(permissionSequenceItem.value as YAMLQuotedTextImpl).textValue] = "permissions"
+                    map[(permissionSequenceItem.value as YAMLScalar).textValue] = "permissions"
                 }
             }
 

@@ -62,7 +62,7 @@ data class RenderElementType(
 
         override fun hashCode(): Int {
             return Objects.hash(
-                *arrayOf(
+                *arrayOf<Any?>(
                     this.id,
                     this.type,
                     this.doc,
