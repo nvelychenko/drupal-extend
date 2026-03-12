@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-03-12
+
+### Fixed
+
+- Fatal error caused by PermissionIndex
+
 ## [0.7.0] - 2025-02-22
 
 PHPStorm 2025 support
@@ -163,7 +169,8 @@ Added:
 - Content entity provider was not working in certain circumstances
 - Deprecated usage of baseDir
 
-[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/nvelychenko/drupal-extend/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/nvelychenko/drupal-extend/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.6...v0.7.0
 [0.6.6]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.5...v0.6.6
 [0.6.5]: https://github.com/nvelychenko/drupal-extend/compare/v0.6.4...v0.6.5
