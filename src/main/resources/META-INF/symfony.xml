@@ -5,4 +5,10 @@
         <typeProvider4 implementation="com.github.nvelychenko.drupalextend.symfonyIntegration.type.DrupalContainerTypeProvider"/>
     </extensions>
 
+    <extensions defaultExtensionNs="com.intellij">
+        <completion.contributor language="Twig"
+                                implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalTwigCompletionContributor"/>
+        <gotoDeclarationHandler implementation="com.github.nvelychenko.drupalextend.reference.SdcGotoDeclarationHandler"/>
+    </extensions>
+
 </idea-plugin>

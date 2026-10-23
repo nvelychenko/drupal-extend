@@ -39,8 +39,6 @@
                                 implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalCompletionContributor"/>
         <completion.contributor order="last" language="PHP"
                                 implementationClass="com.github.nvelychenko.drupalextend.completion.FieldMagicMethodCompletionContributor"/>
-        <completion.contributor language="Twig" implementationClass="com.github.nvelychenko.drupalextend.completion.DrupalTwigCompletionContributor" />
-
 
         <projectConfigurable
                 instance="com.github.nvelychenko.drupalextend.project.configurable.DrupalConfig"

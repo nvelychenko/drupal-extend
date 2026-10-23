@@ -39,5 +39,14 @@ class DrupalReferenceContributor : PsiReferenceContributor() {
             or(STRING_IN_SIMPLE_ARRAY_VALUE, SIMPLE_ARRAY_VALUE_ASSIGNMENT),
             ThemeReferenceProvider()
         )
+
+        // ['#component' => 'theme:button']
+        //                        ↑
+        // $build['#component'] = 'theme:button';
+        //                          ↑
+        registrar.registerReferenceProvider(
+            or(STRING_IN_SIMPLE_ARRAY_VALUE, SIMPLE_ARRAY_VALUE_ASSIGNMENT),
+            SdcReferenceProvider()
+        )
     }
 }

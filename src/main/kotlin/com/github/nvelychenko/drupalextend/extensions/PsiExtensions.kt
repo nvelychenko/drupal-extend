@@ -57,6 +57,10 @@ fun StringLiteralExpression.hasDrupalTheme(): Boolean {
     return "#theme" == getArrayStringLiteralKey()?.contents
 }
 
+fun StringLiteralExpression.hasDrupalComponent(): Boolean {
+    return "#component" == getArrayStringLiteralKey()?.contents
+}
+
 fun StringLiteralExpression.hasDrupalRenderElement(): Boolean {
     return "#type" == getArrayStringLiteralKey()?.contents
 }
