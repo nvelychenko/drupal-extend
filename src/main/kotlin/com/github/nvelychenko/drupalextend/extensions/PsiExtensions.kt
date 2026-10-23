@@ -57,6 +57,27 @@ fun StringLiteralExpression.hasDrupalTheme(): Boolean {
     return "#theme" == getArrayStringLiteralKey()?.contents
 }
 
+fun StringLiteralExpression.hasDrupalComponent(): Boolean {
+    return "#component" == getArrayStringLiteralKey()?.contents
+}
+
+fun StringLiteralExpression.hasDrupalVariant(): Boolean {
+    return "#variant" == getArrayStringLiteralKey()?.contents
+}
+
+/**
+ * ['#component' => 'theme:button', ...] → 'theme:button'
+ */
+fun ArrayCreationExpression.getSdcComponentId(): String? {
+    return hashElements.firstNotNullOfOrNull {
+        if ((it.key as? StringLiteralExpression)?.contents == "#component") {
+            (it.value as? StringLiteralExpression)?.contents
+        } else {
+            null
+        }
+    }
+}
+
 fun StringLiteralExpression.hasDrupalRenderElement(): Boolean {
     return "#type" == getArrayStringLiteralKey()?.contents
 }

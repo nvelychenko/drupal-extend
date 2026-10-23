@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+### Added
+
+- Single Directory Components (SDC) support in Twig (requires Symfony Plugin):
+  - Component id completion in `{% include %}`, `{% embed %}` and `{{ include() }}`
+  - Props completion in `with { }` / `include()` arguments, required props are highlighted
+  - Slots completion in `{% block %}` inside `{% embed %}`
+  - Navigation from component id to `*.component.yml` and its template
+- SDC support in PHP render arrays:
+  - Component id completion and navigation in `'#component'`
+  - Props and slots completion in `'#props'` / `'#slots'`, required props are listed first
+- SDC variants: completion in PHP `'#variant'` and in Twig `with { variant: '|' }`
+
 ## [0.7.1] - 2026-03-12
 
 ### Fixed

@@ -22,6 +22,7 @@
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ConfigEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ThemeIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.FieldsIndex"/>
+        <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ComponentsIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.ContentEntityFqnIndex"/>
         <fileBasedIndex implementation="com.github.nvelychenko.drupalextend.index.RenderElementIndex"/>

@@ -1,18 +1,72 @@
 package com.github.nvelychenko.drupalextend.patterns
 
+import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns.or
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern.Capture
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.jetbrains.php.lang.PhpLanguage
 import com.jetbrains.php.lang.lexer.PhpTokenTypes
 import com.jetbrains.php.lang.parser.PhpElementTypes
 import com.jetbrains.php.lang.parser.PhpStubElementTypes
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
+import com.jetbrains.twig.TwigLanguage
+import com.jetbrains.twig.TwigTokenTypes
+import com.jetbrains.twig.elements.TwigElementTypes
+import fr.adrienbrault.idea.symfony2plugin.templating.TwigPattern
 
 object Patterns {
     private val phpLanguage by lazy { PhpLanguage.INSTANCE }
+
+    /**
+     * Key position inside a Twig hash literal.
+     * {{ include('theme:comp', { label: 'x', | }) }}
+     *                                        ↑
+     */
+    val TWIG_HASH_KEY: ElementPattern<PsiElement> by lazy {
+        psiElement(TwigTokenTypes.IDENTIFIER)
+            .afterLeafSkipping(
+                or(
+                    psiElement(PsiWhiteSpace::class.java),
+                    psiElement(TwigTokenTypes.WHITE_SPACE),
+                    psiElement(TwigTokenTypes.SINGLE_QUOTE),
+                    psiElement(TwigTokenTypes.DOUBLE_QUOTE),
+                ),
+                or(psiElement(TwigTokenTypes.COMMA), psiElement(TwigTokenTypes.LBRACE_CURL)),
+            )
+            .withParent(psiElement(TwigElementTypes.LITERAL))
+            .withLanguage(TwigLanguage.INSTANCE)
+    }
+
+    /**
+     * String value of the `variant` key inside a Twig hash literal.
+     * {{ include('theme:comp', { variant: '|' }) }}
+     *                                      ↑
+     */
+    val TWIG_SDC_VARIANT_VALUE: ElementPattern<PsiElement> by lazy {
+        val whiteSpace = or(psiElement(PsiWhiteSpace::class.java), psiElement(TwigTokenTypes.WHITE_SPACE))
+        psiElement(TwigTokenTypes.STRING_TEXT)
+            .afterLeafSkipping(
+                or(whiteSpace, psiElement(TwigTokenTypes.SINGLE_QUOTE), psiElement(TwigTokenTypes.DOUBLE_QUOTE)),
+                psiElement(TwigTokenTypes.COLON)
+                    .afterLeafSkipping(whiteSpace, psiElement(TwigTokenTypes.IDENTIFIER).withText("variant")),
+            )
+            .inside(psiElement(TwigElementTypes.LITERAL))
+            .withLanguage(TwigLanguage.INSTANCE)
+    }
+
+    /**
+     * {% include 'theme:component' %}, {% embed 'theme:component' %}, {{ include('theme:component') }}
+     *                 ↑                              ↑                               ↑
+     */
+    val TWIG_SDC_COMPONENT_NAME: ElementPattern<PsiElement> by lazy {
+        or(
+            TwigPattern.getTemplateFileReferenceTagPattern("include", "embed"),
+            TwigPattern.getPrintBlockOrTagFunctionPattern("include"),
+        )
+    }
 
     /**
      * $method->get('blabla

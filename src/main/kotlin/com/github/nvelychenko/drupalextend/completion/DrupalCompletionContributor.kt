@@ -56,6 +56,24 @@ class DrupalCompletionContributor : CompletionContributor() {
         extend(CompletionType.BASIC, LEAF_STRING_IN_SIMPLE_ARRAY_VALUE, ThemeCompletionProvider())
 
         // $render = [
+        //    '#component' => '|
+        // ];
+        extend(CompletionType.BASIC, LEAF_STRING_IN_SIMPLE_ARRAY_VALUE, SdcComponentCompletionProvider())
+
+        // $render = [
+        //    '#component' => 'theme:button',
+        //    '#variant' => '|
+        // ];
+        extend(CompletionType.BASIC, LEAF_STRING_IN_SIMPLE_ARRAY_VALUE, SdcVariantCompletionProvider())
+
+        // $render = [
+        //    '#component' => 'theme:button',
+        //    '#props' => ['|'],
+        //    '#slots' => ['|'],
+        // ];
+        extend(CompletionType.BASIC, STRING_LEAF_IN_ARRAY_KEY_OR_ONLY_VALUE, SdcPropsAndSlotsCompletionProvider())
+
+        // $render = [
         //    '#type' => 'checkbox',
         //    '#|
         // ];
