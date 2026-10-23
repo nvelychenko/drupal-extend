@@ -14,6 +14,7 @@
 - SDC support in PHP render arrays:
   - Component id completion and navigation in `'#component'`
   - Props and slots completion in `'#props'` / `'#slots'`, required props are listed first
+- SDC variants: completion in PHP `'#variant'` and in Twig `with { variant: '|' }`
 
 ## [0.7.1] - 2026-03-12
 

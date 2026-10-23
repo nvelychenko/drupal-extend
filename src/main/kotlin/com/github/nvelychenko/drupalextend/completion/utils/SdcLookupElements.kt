@@ -20,3 +20,6 @@ fun SdcComponent.Props.toLookupElement(): LookupElement {
 
 fun SdcComponent.Slots.toLookupElement(): LookupElement =
     PrioritizedLookupElement.withPriority(LookupElementBuilder.create(id).withTypeText(title, true), SDC_PRIORITY)
+
+fun SdcComponent.Variants.toLookupElement(): LookupElement =
+    PrioritizedLookupElement.withPriority(LookupElementBuilder.create(id).withTypeText(title, true), SDC_PRIORITY)

@@ -62,6 +62,12 @@ class DrupalCompletionContributor : CompletionContributor() {
 
         // $render = [
         //    '#component' => 'theme:button',
+        //    '#variant' => '|
+        // ];
+        extend(CompletionType.BASIC, LEAF_STRING_IN_SIMPLE_ARRAY_VALUE, SdcVariantCompletionProvider())
+
+        // $render = [
+        //    '#component' => 'theme:button',
         //    '#props' => ['|'],
         //    '#slots' => ['|'],
         // ];

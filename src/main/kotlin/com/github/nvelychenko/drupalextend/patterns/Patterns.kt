@@ -41,6 +41,23 @@ object Patterns {
     }
 
     /**
+     * String value of the `variant` key inside a Twig hash literal.
+     * {{ include('theme:comp', { variant: '|' }) }}
+     *                                      ↑
+     */
+    val TWIG_SDC_VARIANT_VALUE: ElementPattern<PsiElement> by lazy {
+        val whiteSpace = or(psiElement(PsiWhiteSpace::class.java), psiElement(TwigTokenTypes.WHITE_SPACE))
+        psiElement(TwigTokenTypes.STRING_TEXT)
+            .afterLeafSkipping(
+                or(whiteSpace, psiElement(TwigTokenTypes.SINGLE_QUOTE), psiElement(TwigTokenTypes.DOUBLE_QUOTE)),
+                psiElement(TwigTokenTypes.COLON)
+                    .afterLeafSkipping(whiteSpace, psiElement(TwigTokenTypes.IDENTIFIER).withText("variant")),
+            )
+            .inside(psiElement(TwigElementTypes.LITERAL))
+            .withLanguage(TwigLanguage.INSTANCE)
+    }
+
+    /**
      * {% include 'theme:component' %}, {% embed 'theme:component' %}, {{ include('theme:component') }}
      *                 ↑                              ↑                               ↑
      */

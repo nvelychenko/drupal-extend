@@ -1,6 +1,7 @@
 package com.github.nvelychenko.drupalextend.completion.providers
 
 import com.github.nvelychenko.drupalextend.completion.utils.toLookupElement
+import com.github.nvelychenko.drupalextend.extensions.getSdcComponentId
 import com.github.nvelychenko.drupalextend.extensions.getValue
 import com.github.nvelychenko.drupalextend.index.ComponentsIndex
 import com.github.nvelychenko.drupalextend.index.types.SdcComponent
@@ -46,13 +47,7 @@ class SdcPropsAndSlotsCompletionProvider : CompletionProvider<CompletionParamete
         if (sectionName != "#props" && sectionName != "#slots") return
 
         val renderArray = section.parent as? ArrayCreationExpression ?: return
-        val componentId = renderArray.hashElements.firstNotNullOfOrNull {
-            if ((it.key as? StringLiteralExpression)?.contents == "#component") {
-                (it.value as? StringLiteralExpression)?.contents
-            } else {
-                null
-            }
-        } ?: return
+        val componentId = renderArray.getSdcComponentId() ?: return
 
         val component = fileBasedIndex.getValue(ComponentsIndex.KEY, componentId, project) ?: return
 

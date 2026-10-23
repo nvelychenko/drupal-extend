@@ -5,6 +5,7 @@ import com.github.nvelychenko.drupalextend.index.dataExternalizer.SerializedObje
 import com.github.nvelychenko.drupalextend.index.types.SdcComponent
 import com.github.nvelychenko.drupalextend.index.types.SdcComponent.Props
 import com.github.nvelychenko.drupalextend.index.types.SdcComponent.Slots
+import com.github.nvelychenko.drupalextend.index.types.SdcComponent.Variants
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.github.nvelychenko.drupalextend.util.yml.YAMLKeyValueFinder
 import com.intellij.openapi.project.Project
@@ -79,7 +80,24 @@ class ComponentsIndex : FileBasedIndexExtension<String, SdcComponent>() {
                     }
             }
 
-            map["$themeOrModuleFile:$componentName"] = SdcComponent(aggregatedProps, aggregatedSlots)
+            val variants = YAMLKeyValueFinder("variants").findIn(yamlFile)
+            val aggregatedVariants = ArrayList<Variants>()
+
+            if (variants is YAMLKeyValue && variants.value is YAMLMapping) {
+                (variants.value as YAMLMapping)
+                    .keyValues.forEach {
+                        val value = it.value
+                        if (value is YAMLMapping) {
+                            val id = it.keyText
+                            val title = value.getKeyValueByKey("title")?.valueText ?: ""
+
+                            aggregatedVariants.add(Variants(id, title))
+                        }
+
+                    }
+            }
+
+            map["$themeOrModuleFile:$componentName"] = SdcComponent(aggregatedProps, aggregatedSlots, aggregatedVariants)
 
             return@DataIndexer map
         }
@@ -124,7 +142,7 @@ class ComponentsIndex : FileBasedIndexExtension<String, SdcComponent>() {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getVersion(): Int = 2
+    override fun getVersion(): Int = 3
 
     companion object {
         val KEY = ID.create<String, SdcComponent>("com.github.nvelychenko.drupalextend.index.sdc_components")

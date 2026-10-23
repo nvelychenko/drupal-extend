@@ -6,6 +6,7 @@ import com.github.nvelychenko.drupalextend.index.ComponentsIndex
 import com.github.nvelychenko.drupalextend.index.types.SdcComponent
 import com.github.nvelychenko.drupalextend.patterns.Patterns.TWIG_HASH_KEY
 import com.github.nvelychenko.drupalextend.patterns.Patterns.TWIG_SDC_COMPONENT_NAME
+import com.github.nvelychenko.drupalextend.patterns.Patterns.TWIG_SDC_VARIANT_VALUE
 import com.github.nvelychenko.drupalextend.project.drupalExtendSettings
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder.create
@@ -62,6 +63,30 @@ class DrupalTwigCompletionContributor : CompletionContributor() {
 
                     val component = findSdcComponent(element, PROPS_HOSTS) ?: return
                     component.props.forEach { result.addElement(it.toLookupElement()) }
+
+                    // Drupal passes the chosen variant to the template as the `variant` prop.
+                    if (component.variants.isNotEmpty() && component.props.none { it.id == "variant" }) {
+                        result.addElement(SdcComponent.Props("variant", "variant").toLookupElement())
+                    }
+                }
+            },
+        )
+
+        // {{ include('theme:comp', { variant: '|' }) }}
+        extend(
+            CompletionType.BASIC,
+            TWIG_SDC_VARIANT_VALUE,
+            object: CompletionProvider<CompletionParameters>() {
+                override fun addCompletions(
+                    parameters: CompletionParameters,
+                    context: ProcessingContext,
+                    result: CompletionResultSet
+                ) {
+                    val element = parameters.position
+                    if (!element.project.drupalExtendSettings.isEnabled) return
+
+                    val component = findSdcComponent(element, PROPS_HOSTS) ?: return
+                    component.variants.forEach { result.addElement(it.toLookupElement()) }
                 }
             },
         )
